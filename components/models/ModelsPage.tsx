@@ -12,6 +12,7 @@ interface ModelRow {
   name: string;
   description: string | null; // group
   imagePath: string | null;
+  gender?: string | null; // 'male' | 'female'
 }
 
 const GROUP_ORDER = [
@@ -32,14 +33,17 @@ function GenerateModal({
   onCreated,
   categories,
   onAddCategory,
+  defaultGender = 'female',
 }: {
   onClose: () => void;
   onCreated: () => void;
   categories: string[];
   onAddCategory: (name: string) => void;
+  defaultGender?: 'female' | 'male';
 }) {
   const [prompt, setPrompt] = useState('');
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<'female' | 'male'>(defaultGender);
   const [group, setGroup] = useState(categories[0] ?? 'Generated');
   const [refFile, setRefFile] = useState<File | null>(null);
   const [modelId, setModelId] = useState(DEFAULT_IMAGE_MODEL);
@@ -71,12 +75,13 @@ function GenerateModal({
         fd.append('name', name);
         fd.append('group', group);
         fd.append('model', modelId);
+        fd.append('gender', gender);
         res = await fetch('/api/models/generate', { method: 'POST', body: fd });
       } else {
         res = await fetch('/api/models/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, name, group, model: modelId }),
+          body: JSON.stringify({ prompt, name, group, model: modelId, gender }),
         });
       }
       const data = await res.json();
@@ -167,6 +172,14 @@ function GenerateModal({
                   className="w-full resize-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-[12.5px] text-white/85 outline-none placeholder:text-white/25 focus:border-white/30"
                 />
               </div>
+              <div>
+                <label className="mb-1 block text-[11px] uppercase tracking-wider text-white/40">Gender</label>
+                <div className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
+                  {(['female', 'male'] as const).map((g) => (
+                    <button key={g} type="button" onClick={() => setGender(g)} className={`flex-1 rounded-md px-2 py-1.5 text-[12px] font-medium capitalize transition-colors ${gender === g ? 'bg-[var(--gold-soft)] text-[var(--gold-bright)]' : 'text-white/50 hover:text-white/80'}`}>{g}</button>
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-[11px] uppercase tracking-wider text-white/40">Name</label>
@@ -232,6 +245,7 @@ export function ModelsPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [q, setQ] = useState('');
+  const [gender, setGender] = useState<'female' | 'male'>('female');
   const [searchCat, setSearchCat] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuFor, setMenuFor] = useState<string | null>(null);
@@ -324,7 +338,9 @@ export function ModelsPage() {
   );
   // full list for selectors (dialog/search), defaults first
   const selectableCats = [...new Set([...GROUP_ORDER, ...allCats])];
-  const searched = models.filter(
+  const genderOf = (m: ModelRow) => (m.gender === 'male' ? 'male' : 'female'); // untagged → female
+  const inGender = models.filter((m) => genderOf(m) === gender);
+  const searched = inGender.filter(
     (m) =>
       (!q || m.name.toLowerCase().includes(q.toLowerCase())) &&
       (!searchCat || catOf(m) === searchCat),
@@ -415,9 +431,25 @@ export function ModelsPage() {
       </header>
 
       <div className="mx-auto max-w-6xl px-8 pb-20">
-        <div className="mb-5 mt-2">
-          <h1 className="text-[40px] leading-tight text-white">Models</h1>
-          <p className="mt-1 text-[13px] text-white/45">{models.length} personas across {cats.length} categories.</p>
+        <div className="mb-5 mt-2 flex items-end justify-between">
+          <div>
+            <h1 className="text-[40px] leading-tight text-white">Models</h1>
+            <p className="mt-1 text-[13px] text-white/45">{inGender.length} {gender} personas across {cats.length} categories.</p>
+          </div>
+          {/* Female / Male toggle */}
+          <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+            {(['female', 'male'] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => { setGender(g); setSearchCat(null); }}
+                className={`rounded-lg px-4 py-1.5 text-[12.5px] font-medium capitalize transition-colors ${
+                  gender === g ? 'bg-[var(--gold-soft)] text-[var(--gold-bright)] ring-1 ring-[var(--gold-line)]' : 'text-white/45 hover:text-white/80'
+                }`}
+              >
+                {g} <span className="text-white/30">{models.filter((m) => (m.gender === 'male' ? 'male' : 'female') === g).length}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
@@ -528,6 +560,7 @@ export function ModelsPage() {
           onCreated={load}
           categories={selectableCats}
           onAddCategory={addCategory}
+          defaultGender={gender}
         />
       )}
     </main>

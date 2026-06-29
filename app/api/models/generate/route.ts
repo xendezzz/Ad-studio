@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     let name = '';
     let group = 'Generated';
     let modelId = DEFAULT_IMAGE_MODEL;
+    let gender = 'female';
     let refBuffer: Buffer | null = null;
 
     if (ct.includes('multipart/form-data')) {
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
       name = (form.get('name') as string) || '';
       group = (form.get('group') as string) || 'Generated';
       modelId = (form.get('model') as string) || modelId;
+      gender = (form.get('gender') as string) === 'male' ? 'male' : 'female';
       const file = form.get('file');
       if (file instanceof Blob) refBuffer = Buffer.from(await file.arrayBuffer());
     } else {
@@ -73,6 +75,7 @@ export async function POST(req: NextRequest) {
       name = body?.name || '';
       group = body?.group || 'Generated';
       modelId = body?.model || modelId;
+      gender = body?.gender === 'male' ? 'male' : 'female';
     }
 
     if (!prompt.trim()) return NextResponse.json({ error: 'prompt required' }, { status: 400 });
@@ -110,6 +113,7 @@ export async function POST(req: NextRequest) {
     const row = await Models.create({
       name: name.trim() || `Model ${Date.now().toString(36)}`,
       description: `gen:${group}`,
+      gender,
       imagePath,
       voiceProvider: 'elevenlabs',
     });
