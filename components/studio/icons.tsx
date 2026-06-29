@@ -1,0 +1,48 @@
+import {
+  Film,
+  Clapperboard,
+  PictureInPicture2,
+  Video,
+  UserRound,
+  Sparkles,
+  MonitorSmartphone,
+  Music,
+  Wand2,
+  Scissors,
+  Mic,
+  Layers,
+  Shuffle,
+  Type,
+  Captions,
+  CreditCard,
+  AudioLines,
+  Download,
+  Rows3,
+  type LucideIcon,
+} from 'lucide-react';
+
+const ICONS: Record<string, LucideIcon> = {
+  Film,
+  Clapperboard,
+  PictureInPicture2,
+  Video,
+  UserRound,
+  Sparkles,
+  MonitorSmartphone,
+  Music,
+  Wand2,
+  Scissors,
+  Mic,
+  Layers,
+  Shuffle,
+  Type,
+  Captions,
+  CreditCard,
+  AudioLines,
+  Download,
+  Rows3,
+};
+
+export function iconFor(name: string): LucideIcon {
+  return ICONS[name] ?? Sparkles;
+}

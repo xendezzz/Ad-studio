@@ -1,26 +1,310 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================================
+   Ad-Studio — node canvas theming (dark, minimal, Apple-ish)
+   ============================================================ */
+
+:root {
+  --studio-bg: #0c0d11;            /* deep near-black canvas */
+  --studio-dot: rgba(255, 255, 255, 0.18);
+  --studio-edge: rgba(255, 255, 255, 0.30);
+  --studio-edge-soft: rgba(255, 255, 255, 0.16);
+  --port-in: #2dd4bf;   /* teal — inputs */
+  --port-out: #e879f9;  /* magenta — outputs */
+}
+
+.studio-canvas,
+.studio-canvas .react-flow {
+  background:
+    radial-gradient(135% 95% at 50% -12%, #1a1d24 0%, #0d0e13 52%, #08090c 100%);
+}
+.studio-canvas .react-flow__pane {
+  background: transparent;
+}
+
+/* Figma-style cursor: grab while Space is held, grabbing while dragging */
+.studio-canvas.space-pan,
+.studio-canvas.space-pan .react-flow__pane,
+.studio-canvas.space-pan .react-flow__node {
+  cursor: grab !important;
+}
+.studio-canvas.space-pan:active,
+.studio-canvas.space-pan .react-flow__pane:active,
+.studio-canvas.space-pan .react-flow__pane.dragging {
+  cursor: grabbing !important;
+}
+
+/* dot grid */
+.studio-canvas .react-flow__background path,
+.studio-canvas .react-flow__background circle {
+  color: var(--studio-dot);
+  fill: var(--studio-dot);
+}
+
+/* hide RF attribution for a clean canvas */
+.studio-canvas .react-flow__attribution {
+  display: none;
+}
+
+/* edges — thin, soft, smooth; brighten on hover/selected */
+.studio-canvas .react-flow__edge-path {
+  stroke: var(--studio-edge-soft);
+  stroke-width: 1.5;
+  transition: stroke 160ms ease-out, stroke-width 160ms ease-out;
+}
+.studio-canvas .react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--studio-edge);
+  stroke-width: 2;
+}
+/* selected edge — obvious so it's clear it'll delete on Backspace */
+.studio-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke: #c4b5fd;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(139, 123, 247, 0.7));
+}
+.studio-canvas .react-flow__edge { cursor: pointer; }
+.studio-canvas .react-flow__connectionline path {
+  stroke: var(--port-out);
+  stroke-width: 2.5;
+}
+
+/* connection handles (ports) — large, always visible, easy to grab/click-connect */
+.studio-canvas .react-flow__handle {
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--studio-bg);
+  cursor: crosshair;
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+.studio-canvas .react-flow__handle-left {
+  background: var(--port-in);
+  box-shadow: 0 0 0 0 rgba(45, 212, 191, 0);
+}
+.studio-canvas .react-flow__handle-right {
+  background: var(--port-out);
+  box-shadow: 0 0 0 0 rgba(232, 121, 249, 0);
+}
+.studio-canvas .react-flow__node:hover .react-flow__handle-left {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.18);
+}
+.studio-canvas .react-flow__node:hover .react-flow__handle-right {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 4px rgba(232, 121, 249, 0.18);
+}
+
+/* remove RF default node chrome — our component draws everything */
+.studio-canvas .react-flow__node {
+  font-family: var(--font-sans);
+}
+
+/* spring-in when a node mounts */
+@keyframes studio-node-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.studio-node {
+  animation: studio-node-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* controls — dark frosted */
+.studio-canvas .react-flow__controls {
+  background: rgba(20, 22, 28, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+.studio-canvas .react-flow__controls-button {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+}
+.studio-canvas .react-flow__controls-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.studio-canvas .react-flow__controls-button svg {
+  fill: currentColor;
+}
+/* Animated looping gradient border — shown on a node while it's being analyzed/processed. */
+@property --studio-ab-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.studio-analyzing {
+  position: relative;
+}
+.studio-analyzing::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--studio-ab-angle),
+    #22d3ee,
+    #a78bfa,
+    #fb923c,
+    #f472b6,
+    #22d3ee
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: studio-ab-spin 2.4s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+/* soft glow that pulses with the ring */
+.studio-analyzing::after {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 22px 2px rgba(124, 138, 255, 0.35);
+  animation: studio-ab-pulse 2.4s ease-in-out infinite;
+}
+@keyframes studio-ab-spin {
+  to {
+    --studio-ab-angle: 360deg;
+  }
+}
+@keyframes studio-ab-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
 }

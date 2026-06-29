@@ -1,0 +1,13 @@
+import 'dotenv/config';
+import { defineConfig } from 'drizzle-kit';
+
+export default defineConfig({
+  schema: './lib/schema.ts',
+  out: './drizzle',
+  dialect: 'postgresql',
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+  // Supabase reserves some schemas; keep drizzle-kit focused on public.
+  schemaFilter: ['public'],
+});
