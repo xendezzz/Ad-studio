@@ -9,7 +9,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-heading: var(--font-serif);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -129,6 +130,20 @@
   }
 }
 
+/* Premium editorial headings — Instrument Serif. Page titles (h1) + anything tagged `.display`.
+   Small UI labels stay on the clean sans face. */
+h1,
+.display {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.display-italic {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
 /* ============================================================
    Ad-Studio — node canvas theming (dark, minimal, Apple-ish)
    ============================================================ */
@@ -140,6 +155,111 @@
   --studio-edge-soft: rgba(255, 255, 255, 0.16);
   --port-in: #2dd4bf;   /* teal — inputs */
   --port-out: #e879f9;  /* magenta — outputs */
+  /* warm gold accent — premium, editorial */
+  --gold: #e0a64e;
+  --gold-bright: #f0bd6a;
+  --gold-soft: rgba(224, 166, 78, 0.14);
+  --gold-line: rgba(224, 166, 78, 0.30);
+}
+
+/* premium global touches */
+::selection { background: var(--gold-soft); color: #fff; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); background-clip: padding-box; }
+
+/* gold accent helpers */
+.text-gold { color: var(--gold); }
+.btn-gold {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color: #1a1205;
+  font-weight: 600;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 8px 24px -8px rgba(224,166,78,0.5);
+}
+.btn-gold:hover { filter: brightness(1.06); }
+.hairline { border-bottom: 1px solid rgba(255,255,255,0.07); }
+
+/* Login — aurora light-leak background: black base + drifting blurred color blobs, a center
+   star sparkle, and film grain (all GPU-light). */
+@keyframes aurora-1 { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(18%, -14%) scale(1.4); } 66% { transform: translate(-10%, 8%) scale(0.85); } 100% { transform: translate(0, 0) scale(1); } }
+@keyframes aurora-2 { 0% { transform: translate(0, 0) scale(1.05); } 33% { transform: translate(-20%, 12%) scale(0.75); } 66% { transform: translate(12%, -10%) scale(1.3); } 100% { transform: translate(0, 0) scale(1.05); } }
+@keyframes aurora-3 { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(14%, 14%) scale(1.35); } 66% { transform: translate(-12%, -6%) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
+.aurora-blob { position: absolute; pointer-events: none; mix-blend-mode: screen; will-change: transform; }
+
+@keyframes aurora-twinkle {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.16); }
+}
+.aurora-star {
+  position: absolute; left: 50%; top: 44%; height: 6px; width: 6px; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 14px 6px rgba(255, 255, 255, 0.95), 0 0 48px 14px rgba(180, 220, 255, 0.45);
+  animation: aurora-twinkle 5.5s ease-in-out infinite;
+}
+.aurora-star::before, .aurora-star::after { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.aurora-star::before { width: 2px; height: 260px; background: linear-gradient(180deg, transparent, rgba(255,255,255,0.95), transparent); }
+.aurora-star::after { width: 170px; height: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent); }
+
+/* dotted grid, matching the node canvas background */
+.canvas-dots {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.16) 0.6px, transparent 1px);
+  background-size: 13px 13px;
+}
+
+/* Login — slow looping pan/zoom of a single image (GPU transform, low memory) */
+@keyframes login-drift {
+  0%   { transform: scale(1.08) translate3d(0, 0, 0); }
+  100% { transform: scale(1.2) translate3d(-2.5%, -2%, 0); }
+}
+.login-drift {
+  animation: login-drift 38s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Login wordmark — glowing white serif italic with a highlight that follows the cursor */
+.login-wordmark {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  background: radial-gradient(160px circle at var(--gx, 50%) var(--gy, 50%),
+    #ffffff 0%, rgba(255, 255, 255, 0.72) 45%, rgba(255, 255, 255, 0.5) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 38px rgba(255, 255, 255, 0.22));
+}
+
+/* ── white scheme + multicolor rainbow strokes ───────────────────────────── */
+@keyframes rainbow-pan { to { background-position: 300% 0; } }
+
+/* primary button: white fill, black text, rainbow gradient stroke (pans on hover) */
+.btn-rainbow {
+  color: #0a0a0b;
+  font-weight: 600;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(115deg, #f9a8a8, #ffe08a, #a8f0c0, #8fd3ff, #cdb4ff, #f9a8a8) border-box;
+  background-size: auto, 300% 100%;
+  transition: filter 0.2s ease;
+}
+.btn-rainbow:hover { animation: rainbow-pan 3.5s linear infinite; filter: brightness(1.03); }
+
+/* generic rainbow-stroke surface — set --fill to the inner color */
+.rainbow-stroke {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--fill, rgba(255, 255, 255, 0.04)), var(--fill, rgba(255, 255, 255, 0.04))) padding-box,
+    linear-gradient(115deg, #f9a8a8, #ffe08a, #a8f0c0, #8fd3ff, #cdb4ff, #f9a8a8) border-box;
+}
+
+/* rainbow focus glow for inputs */
+.focus-rainbow:focus-within {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 6px 26px -6px rgba(143, 211, 255, 0.45),
+    0 6px 26px -6px rgba(249, 168, 168, 0.35);
 }
 
 .studio-canvas,

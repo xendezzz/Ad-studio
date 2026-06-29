@@ -20,7 +20,9 @@ export function StudioNav() {
             key={t.href}
             href={t.href}
             className={`rounded-lg px-3 py-1 text-[12.5px] font-medium transition-colors ${
-              active ? 'bg-white/10 text-white/90' : 'text-white/45 hover:text-white/80'
+              active
+                ? 'bg-[var(--gold-soft)] text-[var(--gold-bright)] ring-1 ring-[var(--gold-line)]'
+                : 'text-white/45 hover:text-white/80'
             }`}
           >
             {t.label}

@@ -416,7 +416,7 @@ export function ModelsPage() {
 
       <div className="mx-auto max-w-6xl px-8 pb-20">
         <div className="mb-5 mt-2">
-          <h1 className="text-[26px] font-semibold tracking-tight text-white">Models</h1>
+          <h1 className="text-[40px] leading-tight text-white">Models</h1>
           <p className="mt-1 text-[13px] text-white/45">{models.length} personas across {cats.length} categories.</p>
         </div>
 

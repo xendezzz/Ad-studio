@@ -96,8 +96,8 @@ export function ProjectsLanding() {
 
       <div className="mx-auto max-w-6xl px-8 pb-20">
         <div className="mb-6 mt-4">
-          <h1 className="text-[26px] font-semibold tracking-tight text-white">Projects</h1>
-          <p className="mt-1 text-[13px] text-white/45">
+          <h1 className="text-[40px] leading-tight text-white">Projects</h1>
+          <p className="mt-0.5 text-[13px] text-white/45">
             Clone an ad, swap the model, then scale it across many models.
           </p>
         </div>
