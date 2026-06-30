@@ -18,9 +18,9 @@ interface ModelRow {
 const GROUP_ORDER = [
   'Study Girl',
   'Tech Girl',
-  'Japanese Bandi',
-  'Spanish Bandi',
-  'Brazilian Bandi',
+  'Japanese',
+  'Spanish',
+  'Brazilian',
   'Twitter',
   'Talking Head English',
   'New Faceless',

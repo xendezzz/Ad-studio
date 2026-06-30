@@ -25,7 +25,7 @@ interface ModelRow { id: string; name: string; description: string | null; image
 
 // mirror the Models page: description = "<cat>" (library) or "gen:<cat>" (generated)
 const MODEL_GROUP_ORDER = [
-  'Study Girl', 'Tech Girl', 'Japanese Bandi', 'Spanish Bandi', 'Brazilian Bandi',
+  'Study Girl', 'Tech Girl', 'Japanese', 'Spanish', 'Brazilian',
   'Twitter', 'Talking Head English', 'New Faceless', 'Old Faceless', 'Generated',
 ];
 const isGenModel = (m: ModelRow) => (m.description || '').startsWith('gen:');

@@ -16,7 +16,7 @@ interface ModelRow extends PickModel {
 
 // mirror the Models page / Libraries panel grouping
 const GROUP_ORDER = [
-  'Study Girl', 'Tech Girl', 'Japanese Bandi', 'Spanish Bandi', 'Brazilian Bandi',
+  'Study Girl', 'Tech Girl', 'Japanese', 'Spanish', 'Brazilian',
   'Twitter', 'Talking Head English', 'New Faceless', 'Old Faceless', 'Generated',
 ];
 const catOf = (m: ModelRow) => {

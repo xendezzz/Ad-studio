@@ -58,7 +58,7 @@ export default function LoginPage() {
       {/* giant glowing wordmark — anchored to the bottom */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 select-none whitespace-nowrap text-center font-serif italic leading-[0.82] text-white/90"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 select-none whitespace-nowrap text-center font-sans font-semibold italic leading-[0.82] text-white/90"
         style={{ fontSize: '295px', textShadow: '0 0 55px rgba(255,255,255,0.45), 0 0 150px rgba(255,255,255,0.22)' }}
       >
         Ad-Studio

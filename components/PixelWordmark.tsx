@@ -33,7 +33,7 @@ export function PixelWordmark() {
       bctx.clearRect(0, 0, w, h);
       bctx.textAlign = 'center';
       bctx.textBaseline = 'alphabetic';
-      bctx.font = 'italic 295px "Instrument Serif", Georgia, serif';
+      bctx.font = 'italic 600 295px Inter, system-ui, sans-serif';
       bctx.fillStyle = 'rgba(255,255,255,0.92)';
       bctx.shadowColor = 'rgba(255,255,255,0.5)';
       bctx.shadowBlur = 55;
@@ -75,7 +75,7 @@ export function PixelWordmark() {
     const onResize = () => renderBuffer();
 
     renderBuffer();
-    if (document.fonts?.load) document.fonts.load('italic 295px "Instrument Serif"').then(renderBuffer).catch(() => {});
+    if (document.fonts?.load) document.fonts.load('italic 600 295px Inter').then(renderBuffer).catch(() => {});
     window.addEventListener('mousemove', onMove);
     window.addEventListener('resize', onResize);
     raf = requestAnimationFrame(draw);

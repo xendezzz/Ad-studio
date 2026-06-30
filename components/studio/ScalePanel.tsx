@@ -7,7 +7,7 @@ export interface ScaleModel { id: string; name: string; imagePath: string | null
 
 // keep category order consistent with the Models page
 const GROUP_ORDER = [
-  'Study Girl', 'Tech Girl', 'Japanese Bandi', 'Spanish Bandi', 'Brazilian Bandi',
+  'Study Girl', 'Tech Girl', 'Japanese', 'Spanish', 'Brazilian',
   'Twitter', 'Talking Head English', 'New Faceless', 'Old Faceless', 'Generated',
 ];
 // description = "<category>" for library models, "gen:<category>" for generated

@@ -9,8 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-serif);
-  --font-heading: var(--font-serif);
+  --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -130,18 +129,17 @@
   }
 }
 
-/* Premium editorial headings — Instrument Serif. Page titles (h1) + anything tagged `.display`.
-   Small UI labels stay on the clean sans face. */
+/* Page titles (h1) + anything tagged `.display` — clean sans, tight tracking. */
 h1,
 .display {
-  font-family: var(--font-serif), Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 .display-italic {
-  font-family: var(--font-serif), Georgia, serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-style: italic;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 /* ============================================================
@@ -217,9 +215,9 @@ h1,
   will-change: transform;
 }
 
-/* Login wordmark — glowing white serif italic with a highlight that follows the cursor */
+/* Login wordmark — glowing white italic with a highlight that follows the cursor */
 .login-wordmark {
-  font-family: var(--font-serif), Georgia, serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-style: italic;
   background: radial-gradient(160px circle at var(--gx, 50%) var(--gy, 50%),
     #ffffff 0%, rgba(255, 255, 255, 0.72) 45%, rgba(255, 255, 255, 0.5) 100%);
