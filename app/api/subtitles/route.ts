@@ -12,11 +12,11 @@ export const maxDuration = 300;
  */
 export async function POST(req: NextRequest) {
   try {
-    const { video, style, font, size, position } = await req.json();
+    const { video, style, font, size, position, fontSizePx, stroke, strokeWidth, strokeColor, customX, customY } = await req.json();
     if (!video || typeof video !== 'string') {
       return NextResponse.json({ error: 'video is required' }, { status: 400 });
     }
-    const clip = await applySubtitles(video, { style, font, size, position });
+    const clip = await applySubtitles(video, { style, font, size, position, fontSizePx, stroke, strokeWidth, strokeColor, customX, customY });
     return NextResponse.json({ clip });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Subtitles failed';

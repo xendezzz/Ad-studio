@@ -6,6 +6,7 @@ import { Loader2, Music as MusicIcon, Plus } from 'lucide-react';
 import { StudioNav } from '@/components/StudioNav';
 import { assetsStore } from '@/lib/assetsStore';
 import { backfillFromProjects, recordAsset } from '@/lib/libraryAssets';
+import { uploadAsset } from '@/lib/uploadAsset';
 
 interface Clip { id: string; name: string; path: string; audio?: boolean }
 
@@ -113,16 +114,12 @@ export function ClipsPage() {
     if (!file || !meta) return;
     setBusy(meta.kind);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('folder', meta.folder);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (res.ok && data.path) {
-        await recordAsset(meta.kind, file.name.replace(/\.[^.]+$/, ''), data.path);
-        await loadServer();
-        loadLocal();
-      }
+      const path = await uploadAsset(file, meta.folder);
+      await recordAsset(meta.kind, file.name.replace(/\.[^.]+$/, ''), path);
+      await loadServer();
+      loadLocal();
+    } catch (err) {
+      console.error('[clips upload]', err);
     } finally {
       setBusy(null);
     }

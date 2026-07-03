@@ -27,8 +27,14 @@ const BOX_STYLES = new Set(['caption', 'tag', 'bubble', 'rounded', 'text-box']);
 export interface SubtitleOpts {
   style?: string;
   font?: string;
-  size?: string;
-  position?: string;
+  size?: string; // preset (Small/Medium/Large/X-Large) — overridden by fontSizePx if set
+  position?: string; // top | center | bottom (overridden by customX/customY if set)
+  fontSizePx?: number; // exact typed font size (design px)
+  stroke?: boolean; // draw an outline/stroke (default true)
+  strokeWidth?: number;
+  strokeColor?: string;
+  customX?: number; // 0..100 percent — custom position (caption center X)
+  customY?: number; // 0..100 percent — custom position (caption center Y)
 }
 
 /**
@@ -40,7 +46,13 @@ export async function applySubtitles(video: string, opts: SubtitleOpts = {}): Pr
   const pos = (['top', 'center', 'bottom'].includes(posRaw) ? posRaw : 'bottom') as 'top' | 'center' | 'bottom';
   const textStyle = STYLE_MAP[String(opts.style ?? 'Bold')] ?? 'bold-shadow';
   const fontFamily = FONT_MAP[String(opts.font ?? 'Montserrat')] ?? 'Montserrat, sans-serif';
-  const fontSize = SIZE_MAP[String(opts.size ?? 'Large')] ?? 76;
+  const fontSize = Number(opts.fontSizePx) > 0 ? Number(opts.fontSizePx) : (SIZE_MAP[String(opts.size ?? 'Large')] ?? 76);
+  // stroke: explicit toggle wins; else box styles have none, others default to a 6px black outline
+  const strokeOn = opts.stroke ?? !BOX_STYLES.has(textStyle);
+  const outlineWidth = strokeOn ? Math.max(0, Number(opts.strokeWidth ?? 6)) : 0;
+  const outlineColor = opts.strokeColor || '#000000';
+  // custom position (caption center) overrides the top/center/bottom preset
+  const hasCustom = Number.isFinite(opts.customX) && Number.isFinite(opts.customY);
 
   const ws = createTempWorkspace('adstudio-subs');
   try {
@@ -60,13 +72,15 @@ export async function applySubtitles(video: string, opts: SubtitleOpts = {}): Pr
         next,
         {
           text: g.text,
-          position: pos,
+          ...(hasCustom
+            ? { position: 'custom' as const, customX: Math.max(0, Math.min(100, Number(opts.customX))), customY: Math.max(0, Math.min(100, Number(opts.customY))), textAlign: 'center' as const }
+            : { position: pos }),
           textStyle,
           fontFamily,
           fontSize,
           fontColor: '#ffffff',
-          outlineColor: '#000000',
-          outlineWidth: BOX_STYLES.has(textStyle) ? 0 : 6,
+          outlineColor,
+          outlineWidth,
           entireVideo: false,
           startTime: g.start,
           duration: Math.max(0.4, g.end - g.start),

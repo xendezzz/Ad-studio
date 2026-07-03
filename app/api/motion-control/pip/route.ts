@@ -29,13 +29,17 @@ const f = (n: number) => Math.max(0, Math.min(1, Number(n) || 0)).toFixed(4);
  */
 function cropCreator(inLocal: string, box: CropBox, outLocal: string): void {
   const crop = `crop=iw*${f(box.w)}:ih*${f(box.h)}:iw*${f(box.x)}:ih*${f(box.y)}`;
-  // scale width up to at least 720 (max(720,iw)), keep aspect, force even height
-  const scale = `scale='max(720,iw)':-2:flags=lanczos`;
+  // Kling motion-control rejects the driver unless it shows a COMPLETE upper body WITH margin.
+  // PiP insets are tight (head often cut, person fills the frame), so fit the cropped creator
+  // into ~62% of a 9:16 frame with neutral padding all around — giving a full, well-margined body.
+  const TW = 720, TH = 1280;
+  const iw = Math.round(TW * 0.62), ih = Math.round(TH * 0.62);
+  const vf = `${crop},scale=${iw}:${ih}:force_original_aspect_ratio=decrease,pad=${TW}:${TH}:(ow-iw)/2:(oh-ih)/2:color=0x1a1a1a,setsar=1`;
   execFileSync(
     getFfmpeg(),
     [
       '-y', '-i', inLocal,
-      '-vf', `${crop},${scale}`,
+      '-vf', vf,
       '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', outLocal,
     ],
     { timeout: 300000, maxBuffer: 50 * 1024 * 1024 },
@@ -78,6 +82,39 @@ function probeDims(local: string): { w: number; h: number } {
   } catch {
     return { w: 1080, h: 1920 };
   }
+}
+
+// pixel box within the canvas
+function pxBox(box: CropBox, canvas: { w: number; h: number }) {
+  return {
+    w: Math.max(2, Math.round(box.w * canvas.w)),
+    h: Math.max(2, Math.round(box.h * canvas.h)),
+    x: Math.round(box.x * canvas.w),
+    y: Math.round(box.y * canvas.h),
+  };
+}
+
+/**
+ * METHOD "full": overlay the WHOLE swapped rectangle into the inset box over the original clip.
+ * Fully covers the original creator (no bleed). Keeps the in-video app demo outside the box.
+ */
+function composeFull(origLocal: string, swappedLocal: string, box: CropBox, canvas: { w: number; h: number }, outLocal: string): void {
+  const { w: CW, h: CH } = canvas;
+  const b = pxBox(box, canvas);
+  execFileSync(
+    getFfmpeg(),
+    [
+      '-y', '-i', origLocal, '-i', swappedLocal,
+      '-filter_complex',
+      `[0:v]scale=${CW}:${CH}:force_original_aspect_ratio=increase,crop=${CW}:${CH},setsar=1[bg];` +
+        `[1:v]scale=${b.w}:${b.h}:force_original_aspect_ratio=increase,crop=${b.w}:${b.h}[fg];` +
+        `[bg][fg]overlay=${b.x}:${b.y}:shortest=1[v]`,
+      '-map', '[v]', '-map', '1:a?',
+      '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'fast', '-c:a', 'aac', '-shortest',
+      outLocal,
+    ],
+    { timeout: 300000, maxBuffer: 50 * 1024 * 1024 },
+  );
 }
 
 /**
@@ -127,12 +164,15 @@ function composeAtBox(bgLocal: string, alphaLocal: string, audioLocal: string, b
 export async function POST(req: NextRequest) {
   try {
     const { image, pipVideo, appDemo, crop, keepOriginalSound, prompt } = await req.json();
-    if (!image || !pipVideo || !appDemo || !crop) {
+    if (!image || !pipVideo || !crop) {
       return NextResponse.json(
-        { error: 'image, pipVideo, appDemo and crop are required' },
+        { error: 'image, pipVideo and crop are required' },
         { status: 400 },
       );
     }
+    // appDemo optional: when omitted, paste the swapped creator back over the ORIGINAL clip
+    // (keep the app demo already in the video) instead of an external app demo.
+    const useOriginalDemo = !appDemo;
     const box: CropBox = { x: crop.x, y: crop.y, w: crop.w, h: crop.h };
 
     const ws = createTempWorkspace('adstudio-pip');
@@ -153,6 +193,8 @@ export async function POST(req: NextRequest) {
           driverVideoPath: cropPath,
           keepOriginalSound: keepOriginalSound !== false,
           prompt: typeof prompt === 'string' && prompt ? prompt : undefined,
+          // PiP driver is a tight creator crop (no full upper body) → frame on the persona still
+          characterOrientation: 'image',
         });
         swappedPath = r.outputPath;
       } catch (mcErr) {
@@ -170,10 +212,21 @@ export async function POST(req: NextRequest) {
         throw new Error(`motion-control on the cropped creator failed — ${msg}`);
       }
 
-      // 3. remove background → alpha cutout
-      const { outputPath: alphaPath } = await removeVideoBackground(swappedPath);
+      // canvas = the PiP clip's own dimensions (so the output keeps the source ad's aspect)
+      const canvas = probeDims(pipLocal);
 
-      // 4. composite over the app-demo at the original corner
+      // ── IN-VIDEO APP DEMO: paste the swapped creator back into the same box (no bg removal) ──
+      if (useOriginalDemo) {
+        const swappedLocal = path.join(ws, 'swapped-full.mp4');
+        await downloadToPath(swappedPath, swappedLocal);
+        const outLocal = path.join(ws, 'pip-final.mp4');
+        composeFull(pipLocal, swappedLocal, box, canvas, outLocal);
+        const clip = await uploadFile(outLocal, { folder: 'gen/pip', contentType: 'video/mp4' });
+        return NextResponse.json({ clip });
+      }
+
+      // ── EXTERNAL APP DEMO: composite the bg-removed cutout over the length-matched app demo ──
+      const { outputPath: alphaPath } = await removeVideoBackground(swappedPath);
       const bgLocal = path.join(ws, 'appdemo.mp4');
       const alphaLocal = path.join(ws, 'alpha.webm');
       const audioLocal = path.join(ws, 'swapped.mp4');
@@ -182,9 +235,6 @@ export async function POST(req: NextRequest) {
         downloadToPath(alphaPath, alphaLocal),
         downloadToPath(swappedPath, audioLocal),
       ]);
-
-      // Match the app demo's length to the PiP segment's length (the app-demo duration
-      // in the original ad) by fast-forwarding / slowing it down.
       const targetSec = getVideoDuration(pipLocal) || getVideoDuration(audioLocal) || 0;
       let bgForComposite = bgLocal;
       if (targetSec > 0 && Math.abs((getVideoDuration(bgLocal) || targetSec) - targetSec) > 0.15) {
@@ -192,13 +242,9 @@ export async function POST(req: NextRequest) {
         retimeToDuration(bgLocal, targetSec, stretched);
         bgForComposite = stretched;
       }
-
-      // canvas = the PiP clip's own dimensions (so the output keeps the source ad's aspect)
-      const canvas = probeDims(pipLocal);
       const outLocal = path.join(ws, 'pip-final.mp4');
       composeAtBox(bgForComposite, alphaLocal, audioLocal, box, canvas, outLocal);
       const clip = await uploadFile(outLocal, { folder: 'gen/pip', contentType: 'video/mp4' });
-
       return NextResponse.json({ clip });
     } finally {
       cleanupTempWorkspace(ws);

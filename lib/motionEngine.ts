@@ -27,6 +27,13 @@ export interface MotionControlInput {
   keepOriginalSound?: boolean;
   /** Optional motion/style prompt. */
   prompt?: string;
+  /**
+   * Which subject the output is framed on. 'video' needs a full upper body in the DRIVER clip
+   * (good for full-frame swaps); 'image' frames on the persona still and tolerates close-up
+   * drivers (needed for tight PiP crops). Default 'video'; the engine auto-retries the other
+   * mode if the upper-body check rejects the input.
+   */
+  characterOrientation?: 'video' | 'image';
 }
 
 export interface MotionControlResult {
@@ -64,24 +71,39 @@ export const falKlingEngine: MotionEngine = {
       getSignedUrl(input.driverVideoPath, 3600),
     ]);
 
-    const { request_id } = await fal.queue.submit(FAL_MOTION_CONTROL_ENDPOINT, {
-      input: {
-        image_url: imageUrl,
-        video_url: videoUrl,
-        character_orientation: 'video',
-        keep_original_sound: input.keepOriginalSound ?? true,
-        ...(input.prompt ? { prompt: input.prompt } : {}),
-      },
-    });
+    // One submit+poll at a given orientation.
+    const runAt = async (orientation: 'video' | 'image') => {
+      const { request_id } = await fal.queue.submit(FAL_MOTION_CONTROL_ENDPOINT, {
+        input: {
+          image_url: imageUrl,
+          video_url: videoUrl,
+          character_orientation: orientation,
+          keep_original_sound: input.keepOriginalSound ?? true,
+          ...(input.prompt ? { prompt: input.prompt } : {}),
+        },
+      });
+      await fal.queue.subscribeToStatus(FAL_MOTION_CONTROL_ENDPOINT, { requestId: request_id, logs: false });
+      const result = await fal.queue.result(FAL_MOTION_CONTROL_ENDPOINT, { requestId: request_id });
+      return { result, request_id };
+    };
 
-    // Poll to completion (no webhook — synchronous flow).
-    await fal.queue.subscribeToStatus(FAL_MOTION_CONTROL_ENDPOINT, {
-      requestId: request_id,
-      logs: false,
-    });
-    const result = await fal.queue.result(FAL_MOTION_CONTROL_ENDPOINT, {
-      requestId: request_id,
-    });
+    // 'video' orientation requires a full upper body in the driver; if that check rejects a
+    // tight (PiP) crop, retry framing on the persona image instead ('image').
+    const isUpperBodyReject = (e: unknown) => {
+      const msg = (e instanceof Error ? e.message : String(e)) + ' ' + JSON.stringify((e as { body?: unknown })?.body ?? '');
+      return /upper body|character_orientation|no complete/i.test(msg);
+    };
+    const primary = input.characterOrientation ?? 'video';
+    const fallback = primary === 'video' ? 'image' : 'video';
+    let request_id: string;
+    let result: Awaited<ReturnType<typeof runAt>>['result'];
+    try {
+      ({ result, request_id } = await runAt(primary));
+    } catch (e) {
+      if (!isUpperBodyReject(e)) throw e;
+      console.warn(`[motion-control] "${primary}" orientation rejected (upper-body check) — retrying with "${fallback}"`);
+      ({ result, request_id } = await runAt(fallback));
+    }
 
     const videoData =
       (result.data as { video?: { url?: string } })?.video ??

@@ -13,12 +13,14 @@ type Stage = 'image' | 'video' | 'idle';
  */
 export function FirstFrameModal({
   src,
+  compareSrc,
   stage,
   onApprove,
   onRegenerate,
   onClose,
 }: {
   src: string | null;
+  compareSrc?: string | null; // original clip (reference video) to compare the swap against
   stage: Stage;
   onApprove: () => void;
   onRegenerate: () => void;
@@ -36,7 +38,7 @@ export function FirstFrameModal({
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 backdrop-blur-sm" onMouseDown={() => !locked && onClose()}>
       <div
-        className="studio-node w-[460px] max-w-[92vw] rounded-2xl border border-white/10 bg-[#15171c]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
+        className={`studio-node ${compareSrc ? 'w-[560px]' : 'w-[340px]'} max-w-[92vw] rounded-2xl border border-white/10 bg-[#15171c]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]`}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -49,25 +51,38 @@ export function FirstFrameModal({
           </button>
         </div>
 
-        {/* preview */}
-        <div className="relative grid aspect-[9/16] max-h-[56vh] place-items-center overflow-hidden rounded-xl border border-white/8 bg-black">
-          {src ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={src} alt="first frame" className="h-full w-full object-contain" />
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-white/45">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="text-[12px]">Generating first frame…</span>
-            </div>
-          )}
-          {locked && (
-            <div className="absolute inset-0 grid place-items-center bg-black/55 backdrop-blur-sm">
-              <div className="flex flex-col items-center gap-2 text-white/80">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="text-[12px]">Generating video…</span>
+        {/* preview — original clip vs swapped result, side by side (or just the result) */}
+        <div className={`grid gap-2.5 ${compareSrc ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          {compareSrc && (
+            <div>
+              <div className="mb-1 text-[10px] font-medium uppercase tracking-wider text-white/40">Original</div>
+              <div className="relative grid aspect-[9/16] max-h-[64vh] w-full place-items-center overflow-hidden rounded-xl border border-white/8 bg-black">
+                <video src={compareSrc} muted playsInline preload="metadata" className="h-full w-full object-contain" />
               </div>
             </div>
           )}
+          <div>
+            {compareSrc && <div className="mb-1 text-[10px] font-medium uppercase tracking-wider text-white/40">Swapped</div>}
+            <div className="relative grid aspect-[9/16] max-h-[64vh] w-full place-items-center overflow-hidden rounded-xl border border-white/8 bg-black">
+              {src ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={src} alt="first frame" className="h-full w-full object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-white/45">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span className="text-center text-[11px]">Generating…</span>
+                </div>
+              )}
+              {locked && (
+                <div className="absolute inset-0 grid place-items-center bg-black/55 backdrop-blur-sm">
+                  <div className="flex flex-col items-center gap-2 text-white/80">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <span className="text-[11px]">Generating video…</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <p className="mt-3 text-[11px] leading-relaxed text-white/40">

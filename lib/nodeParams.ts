@@ -132,6 +132,7 @@ export const PARAM_SCHEMAS: Record<PipelineNodeKind, ParamField[]> = {
     },
     { key: 'content', label: 'Text', control: 'text', placeholder: 'on-screen text' },
   ],
+  asset: [], // configured via the Asset editor modal (upload + position + timing)
   subtitles: [
     {
       key: 'style',

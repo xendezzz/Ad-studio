@@ -25,6 +25,8 @@ export function TrimSplitModal({
   onClip,
   onSplit,
   onClose,
+  initialIn,
+  initialOut,
 }: {
   src: string;
   title: string;
@@ -32,6 +34,10 @@ export function TrimSplitModal({
   onClip: (start: number, end: number) => void;
   onSplit: (start: number, mid: number, end: number) => void;
   onClose: () => void;
+  // when the video is the FULL source (segment cut by AI): pre-position the handles at the
+  // cut range; the user can drag them out to reclaim trimmed portions.
+  initialIn?: number;
+  initialOut?: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -42,16 +48,20 @@ export function TrimSplitModal({
   const [playing, setPlaying] = useState(false);
   const drag = useRef<Drag>(null);
 
-  // init bounds once metadata is known
+  // init bounds once metadata is known — start the selection at the AI-cut range if given
   const onMeta = useCallback(() => {
     const d = videoRef.current?.duration ?? 0;
     if (Number.isFinite(d) && d > 0) {
       setDuration(d);
-      setInT(0);
-      setOutT(d);
-      setPlayhead(0);
+      const i = Math.max(0, Math.min(initialIn ?? 0, d));
+      const o = Math.min(d, initialOut != null ? initialOut : d);
+      setInT(i);
+      setOutT(o > i ? o : d);
+      setPlayhead(i);
+      const v = videoRef.current;
+      if (v) v.currentTime = i;
     }
-  }, []);
+  }, [initialIn, initialOut]);
 
   const seek = useCallback((t: number) => {
     const v = videoRef.current;
@@ -225,7 +235,7 @@ export function TrimSplitModal({
         {/* actions */}
         <div className="mt-4 flex items-center justify-between gap-2">
           <span className="text-[11px] text-white/40">
-            Selection {fmt(Math.max(0, outT - inT))}
+            {initialOut != null ? 'Full source · drag handles to reclaim cut parts · ' : ''}Selection {fmt(Math.max(0, outT - inT))}
           </span>
           <div className="flex items-center gap-2">
             <button

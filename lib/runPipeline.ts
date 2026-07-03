@@ -17,6 +17,7 @@ import { removeVideoBackground } from './bgRemoval';
 import { getFfmpeg } from './ffmpegBinaries';
 import { addTextOverlay } from './ffmpegTextOverlay';
 import { applyTextOverlays, type TextItem } from './textBurn';
+import { applyAssetOverlays, type AssetItem } from './assetBurn';
 import { applySubtitles } from './subtitlesBurn';
 import { mixAudio, concatVideos, xfadeVideos } from './ffmpegMediaOps';
 import { textToSpeech } from './elevenlabs';
@@ -314,6 +315,16 @@ async function executeNode(
       return { kind: node.kind, videoPath: outPath };
     }
 
+    // --- post: asset overlays (image / gif / video), positioned + timed ---
+    case 'asset': {
+      let items: AssetItem[] | null = null;
+      try { items = p.assets ? (JSON.parse(p.assets) as AssetItem[]) : null; } catch { items = null; }
+      // re-burn onto the live upstream clip so a swapped/scaled clip gets the same assets
+      if (items?.length && inVideo) return { kind: node.kind, videoPath: await applyAssetOverlays(inVideo, items) };
+      if (p.clip) return { kind: node.kind, videoPath: p.clip };
+      return { kind: node.kind, videoPath: inVideo };
+    }
+
     // --- transition: a MARKER between two clips. Wire it to the sequence/export between the two
     // video layers (by Y); the sequence crossfades across it instead of a hard cut. ---
     case 'transition': {
@@ -333,7 +344,18 @@ async function executeNode(
       // using the same styling the user picked in the Subtitles panel (single source of truth).
       const src = inVideo ?? p.clip;
       if (!src) return { kind: node.kind, videoPath: inVideo };
-      const out = await applySubtitles(src, { style: p.style, font: p.font, size: p.size, position: p.position });
+      // full config (font size / stroke / custom position) is stored as subConfig by the editor
+      let cfg: { style?: string; font?: string; fontSize?: number; stroke?: boolean; strokeWidth?: number; strokeColor?: string; position?: string; customX?: number; customY?: number } = {};
+      try { cfg = p.subConfig ? JSON.parse(p.subConfig) : {}; } catch { cfg = {}; }
+      const opts = cfg.style
+        ? {
+            style: cfg.style, font: cfg.font, fontSizePx: cfg.fontSize,
+            stroke: cfg.stroke, strokeWidth: cfg.strokeWidth, strokeColor: cfg.strokeColor,
+            position: cfg.position === 'custom' ? undefined : cfg.position,
+            ...(cfg.position === 'custom' ? { customX: (cfg.customX ?? 0.5) * 100, customY: (cfg.customY ?? 0.85) * 100 } : {}),
+          }
+        : { style: p.style, font: p.font, size: p.size, position: p.position };
+      const out = await applySubtitles(src, opts);
       return { kind: node.kind, videoPath: out };
     }
 

@@ -36,6 +36,8 @@ import { FirstFrameModal } from '@/components/studio/FirstFrameModal';
 import { CropVerifyModal, type Box } from '@/components/studio/CropVerifyModal';
 import { StudioActionsContext } from '@/components/studio/studioActions';
 import { TextEditorModal, type TextItem } from '@/components/studio/TextEditorModal';
+import { AssetEditorModal, type AssetItem } from '@/components/studio/AssetEditorModal';
+import { SubtitlesEditorModal, type SubtitleConfig, DEFAULT_SUB_CONFIG } from '@/components/studio/SubtitlesEditorModal';
 import { NODE_DEFS, type PipelineNodeKind } from '@/lib/pipeline';
 import { projectsStore } from '@/lib/projectsStore';
 
@@ -178,6 +180,12 @@ function Inner({ projectId }: { projectId?: string }) {
   // Text node editor (multi-text + emoji timeline)
   const [textEditor, setTextEditor] = useState<{ nodeId: string; video: string; items: TextItem[] } | null>(null);
   const [textBusy, setTextBusy] = useState(false);
+  // Asset node editor (image / gif / video overlays, timed + positioned)
+  const [assetEditor, setAssetEditor] = useState<{ nodeId: string; video: string; items: AssetItem[] } | null>(null);
+  const [assetBusy, setAssetBusy] = useState(false);
+  // Subtitles editor (style / font / size / stroke / position)
+  const [subtitlesEditor, setSubtitlesEditor] = useState<{ nodeId: string; video: string; cfg: SubtitleConfig } | null>(null);
+  const [subtitlesBusy, setSubtitlesBusy] = useState(false);
   // user-facing error/result surfaced in the OutputPanel
   const [error, setError] = useState<string | null>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -358,7 +366,7 @@ function Inner({ projectId }: { projectId?: string }) {
           body: JSON.stringify({ clip, refClip, model: refParams.analysisModel }),
         });
         const d = await res.json();
-        const segs = (d?.segments ?? []) as { kind: PipelineNodeKind; clip: string; part: string }[];
+        const segs = (d?.segments ?? []) as { kind: PipelineNodeKind; clip: string; part: string; startSec?: number; endSec?: number }[];
         if (!res.ok || !segs.length) {
           setStatus(combinedId, 'failed');
           return;
@@ -375,6 +383,9 @@ function Inner({ projectId }: { projectId?: string }) {
         segs.forEach((s, i) => {
           counts[s.kind] = (counts[s.kind] ?? 0) + 1;
           const id = `${s.kind}-${stamp}-${i}`;
+          // remember the source clip + the AI-cut range, so Trim/Split can show the FULL
+          // source and let the user drag the handles to reclaim cut portions.
+          const hasRange = typeof s.endSec === 'number' && (s.endSec ?? 0) > (s.startSec ?? 0);
           newNodes.push({
             id,
             type: 'step',
@@ -382,7 +393,10 @@ function Inner({ projectId }: { projectId?: string }) {
             data: {
               kind: s.kind,
               title: segLabel(s.kind, counts[s.kind]),
-              params: { clip: s.clip },
+              params: {
+                clip: s.clip,
+                ...(hasRange ? { srcClip: clip, srcStart: String(s.startSec), srcEnd: String(s.endSec) } : {}),
+              },
               status: 'completed',
             } as StepNodeData,
             selected: false,
@@ -495,7 +509,8 @@ function Inner({ projectId }: { projectId?: string }) {
                       ...n.data,
                       status: clip ? 'completed' : 'failed',
                       title: segLabel(kind, idx + 1),
-                      params: { ...((n.data as StepNodeData).params ?? {}), ...(clip ? { clip } : {}) },
+                      // keep the reference source + cut range for reclaimable Trim/Split
+                      params: { ...((n.data as StepNodeData).params ?? {}), ...(clip ? { clip, srcClip: refClip, srcStart: String(o.startSec), srcEnd: String(o.endSec) } : {}) },
                     },
                   }
                 : n,
@@ -885,17 +900,25 @@ function Inner({ projectId }: { projectId?: string }) {
     async (start: number, end: number) => {
       const id = trimNodeId;
       const node = liveRef.current.nodes.find((n) => n.id === id);
-      const clip = (node?.data as StepNodeData | undefined)?.params?.clip;
-      if (!id || !clip) return;
+      const params = (node?.data as StepNodeData | undefined)?.params;
+      // cut from the FULL source when we have it (start/end are absolute source times), else the clip
+      const source = params?.srcClip ?? params?.clip;
+      if (!id || !source) return;
       setTrimBusy(true);
-      const out = await trimClip(clip, start, end);
+      const out = await trimClip(source, start, end);
       setTrimBusy(false);
       if (out) {
-        updateParam(id, 'clip', out);
+        setNodes((nds) =>
+          nds.map((n) =>
+            n.id === id
+              ? { ...n, data: { ...n.data, params: { ...((n.data as StepNodeData).params ?? {}), clip: out, ...(params?.srcClip ? { srcStart: String(start), srcEnd: String(end) } : {}) } } }
+              : n,
+          ),
+        );
         setTrimNodeId(null);
       }
     },
-    [trimNodeId, trimClip, updateParam],
+    [trimNodeId, trimClip, setNodes],
   );
   // "Split here" — node keeps [start,mid]; a new sibling node (same kind) gets [mid,end].
   const onSplitNode = useCallback(
@@ -903,10 +926,11 @@ function Inner({ projectId }: { projectId?: string }) {
       const id = trimNodeId;
       const node = liveRef.current.nodes.find((n) => n.id === id);
       const data = node?.data as StepNodeData | undefined;
-      const clip = data?.params?.clip;
-      if (!id || !node || !clip) return;
+      const source = data?.params?.srcClip ?? data?.params?.clip;
+      if (!id || !node || !data || !source) return;
       setTrimBusy(true);
-      const [c1, c2] = await Promise.all([trimClip(clip, start, mid), trimClip(clip, mid, end)]);
+      // absolute source times when we have srcClip; else times within the clip
+      const [c1, c2] = await Promise.all([trimClip(source, start, mid), trimClip(source, mid, end)]);
       setTrimBusy(false);
       if (!c1 || !c2) return;
       snapshot();
@@ -915,11 +939,12 @@ function Inner({ projectId }: { projectId?: string }) {
       const count = liveRef.current.nodes.filter((n) => (n.data as StepNodeData).kind === kind).length + 1;
       const newTitle = isCc ? segLabel(kind, count) : `${data.title ?? NODE_DEFS[kind].label} (2)`;
       const newId = `${kind}-${Date.now().toString(36)}`;
+      const hasSrc = Boolean(data.params?.srcClip);
       const newNode: Node = {
         id: newId,
         type: 'step',
         position: { x: node.position.x, y: node.position.y + 170 },
-        data: { kind, title: newTitle, params: { ...(data.params ?? {}), clip: c2 } } as StepNodeData,
+        data: { kind, title: newTitle, params: { ...(data.params ?? {}), clip: c2, ...(hasSrc ? { srcStart: String(mid), srcEnd: String(end) } : {}) } } as StepNodeData,
         selected: true,
       };
       // part 1 stays on the original node; part 2 inherits the original's downstream links
@@ -929,7 +954,7 @@ function Inner({ projectId }: { projectId?: string }) {
       setNodes((nds) => [
         ...nds.map((n) =>
           n.id === id
-            ? { ...n, selected: false, data: { ...n.data, params: { ...(data.params ?? {}), clip: c1 } } }
+            ? { ...n, selected: false, data: { ...n.data, params: { ...(data.params ?? {}), clip: c1, ...(hasSrc ? { srcStart: String(start), srcEnd: String(mid) } : {}) } } }
             : { ...n, selected: false },
         ),
         newNode,
@@ -994,7 +1019,11 @@ function Inner({ projectId }: { projectId?: string }) {
           ? await fetch('/api/motion-control/pip', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ image, pipVideo: video, appDemo: params.appDemo, crop, keepOriginalSound, prompt: params.prompt }),
+              // pipUseOriginal → paste the swapped creator back into the clip (no external app demo)
+              body: JSON.stringify({
+                image, pipVideo: video, crop, keepOriginalSound, prompt: params.prompt,
+                appDemo: params.pipUseOriginal === 'true' ? undefined : params.appDemo,
+              }),
             })
           : await fetch('/api/motion-control', {
               method: 'POST',
@@ -1078,8 +1107,9 @@ function Inner({ projectId }: { projectId?: string }) {
         return;
       }
       const isPiP = data?.kind === 'cc-pip';
-      if (isPiP && !data?.params?.appDemo) {
-        setError('Connect an App Demo node to this PiP part first — the bg-removed, swapped creator gets composited over it.');
+      const pipUseOriginal = data?.params?.pipUseOriginal === 'true';
+      if (isPiP && !pipUseOriginal && !data?.params?.appDemo) {
+        setError('Connect an App Demo node to this PiP part, or turn on "Use app demo in clip" in the inspector to keep the demo already in the video.');
         return;
       }
 
@@ -1567,46 +1597,36 @@ function Inner({ projectId }: { projectId?: string }) {
         return;
       }
 
+      if (kind === 'asset') {
+        if (!inClip) {
+          setError('Connect a video into the Asset node first.');
+          return;
+        }
+        let saved: AssetItem[] = [];
+        try {
+          saved = JSON.parse((node?.data as StepNodeData | undefined)?.params?.assets ?? '[]');
+        } catch {
+          /* none yet */
+        }
+        setError(null);
+        setAssetEditor({ nodeId, video: inClip, items: Array.isArray(saved) ? saved : [] });
+        return;
+      }
+
       if (kind === 'subtitles') {
         if (!inClip) {
           setError('Connect a video into the Subtitles node first.');
           return;
         }
-        const proceed = async () => {
-          setError(null);
-          setNodeStatus(nodeId, 'processing');
-          try {
-            const sp = (node?.data as StepNodeData | undefined)?.params ?? {};
-            const res = await fetch('/api/subtitles', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ video: inClip, style: sp.style, font: sp.font, size: sp.size, position: sp.position }),
-            });
-            const d = await res.json();
-            if (res.ok && d.clip) {
-              setNodes((nds) =>
-                nds.map((n) =>
-                  n.id === nodeId
-                    ? { ...n, data: { ...n.data, status: 'completed', params: { ...((n.data as StepNodeData).params ?? {}), clip: d.clip } } }
-                    : n,
-                ),
-              );
-            } else {
-              setNodeStatus(nodeId, 'failed');
-              setError(d.error ? `Subtitles failed — ${d.error}` : 'Subtitles failed.');
-            }
-          } catch {
-            setNodeStatus(nodeId, 'failed');
-            setError('Subtitles failed.');
-          }
-        };
-        setCostPrompt({
-          title: 'Apply subtitles',
-          confirmLabel: 'Apply',
-          note: 'Whisper transcription + caption burn.',
-          lines: [costLine('Subtitles', 1, 'subtitles')],
-          onConfirm: () => void proceed(),
-        });
+        // open the subtitles editor (style/font/size/stroke/position) — Apply runs the burn
+        let cfg = DEFAULT_SUB_CONFIG;
+        try {
+          const saved = (node?.data as StepNodeData | undefined)?.params?.subConfig;
+          if (saved) cfg = { ...DEFAULT_SUB_CONFIG, ...JSON.parse(saved) };
+        } catch { /* default */ }
+        setError(null);
+        setSubtitlesEditor({ nodeId, video: inClip, cfg });
+        return;
       }
     },
     [setNodes, setNodeStatus],
@@ -1647,6 +1667,89 @@ function Inner({ projectId }: { projectId?: string }) {
       }
     },
     [textEditor, setNodes, setNodeStatus],
+  );
+
+  // Asset editor "Apply" → burn the image/gif/video overlays onto the input clip
+  const applyAsset = useCallback(
+    async (assets: AssetItem[]) => {
+      const ctx = assetEditor;
+      if (!ctx) return;
+      setAssetBusy(true);
+      setNodeStatus(ctx.nodeId, 'processing');
+      try {
+        const items = assets.map(({ path, kind, x, y, w, h, startSec, endSec, cropX, cropY, cropW, cropH, trimStart, trimEnd, muted }) =>
+          ({ path, kind, x, y, w, h, startSec, endSec, cropX, cropY, cropW, cropH, trimStart, trimEnd, muted }));
+        const res = await fetch('/api/asset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ video: ctx.video, items }),
+        });
+        const d = await res.json();
+        if (res.ok && d.clip) {
+          setNodes((nds) =>
+            nds.map((n) =>
+              n.id === ctx.nodeId
+                ? { ...n, data: { ...n.data, status: 'completed', params: { ...((n.data as StepNodeData).params ?? {}), clip: d.clip, assets: JSON.stringify(assets) } } }
+                : n,
+            ),
+          );
+          setAssetEditor(null);
+        } else {
+          setNodeStatus(ctx.nodeId, 'failed');
+          setError(d.error ? `Asset failed — ${d.error}` : 'Asset overlay failed.');
+        }
+      } catch {
+        setNodeStatus(ctx.nodeId, 'failed');
+        setError('Asset overlay failed.');
+      } finally {
+        setAssetBusy(false);
+      }
+    },
+    [assetEditor, setNodes, setNodeStatus],
+  );
+
+  // Subtitles editor "Apply" → transcribe + burn captions with the chosen style/stroke/position
+  const applySubtitlesEditor = useCallback(
+    async (cfg: SubtitleConfig) => {
+      const ctx = subtitlesEditor;
+      if (!ctx) return;
+      setSubtitlesBusy(true);
+      setNodeStatus(ctx.nodeId, 'processing');
+      try {
+        const res = await fetch('/api/subtitles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            video: ctx.video,
+            style: cfg.style, font: cfg.font,
+            fontSizePx: cfg.fontSize,
+            stroke: cfg.stroke, strokeWidth: cfg.strokeWidth, strokeColor: cfg.strokeColor,
+            position: cfg.position === 'custom' ? undefined : cfg.position,
+            ...(cfg.position === 'custom' ? { customX: cfg.customX * 100, customY: cfg.customY * 100 } : {}),
+          }),
+        });
+        const d = await res.json();
+        if (res.ok && d.clip) {
+          setNodes((nds) =>
+            nds.map((n) =>
+              n.id === ctx.nodeId
+                ? { ...n, data: { ...n.data, status: 'completed', params: { ...((n.data as StepNodeData).params ?? {}), clip: d.clip, subConfig: JSON.stringify(cfg), style: cfg.style, font: cfg.font } } }
+                : n,
+            ),
+          );
+          setSubtitlesEditor(null);
+        } else {
+          setNodeStatus(ctx.nodeId, 'failed');
+          setError(d.error ? `Subtitles failed — ${d.error}` : 'Subtitles failed.');
+        }
+      } catch {
+        setNodeStatus(ctx.nodeId, 'failed');
+        setError('Subtitles failed.');
+      } finally {
+        setSubtitlesBusy(false);
+      }
+    },
+    [subtitlesEditor, setNodes, setNodeStatus],
   );
 
   // --- cursor: arrow by default, grab while Space is held (Figma-style pan) ---
@@ -1869,16 +1972,25 @@ function Inner({ projectId }: { projectId?: string }) {
         <ExportResultsPanel results={exportResults} projectName={projectName} onClose={() => setExportResults(null)} />
       )}
       {costPrompt && <CostConfirmModal prompt={costPrompt} onClose={() => setCostPrompt(null)} />}
-      {trimNode && (trimNode.data as StepNodeData).params?.clip && (
-        <TrimSplitModal
-          src={`/api/serve/${(trimNode.data as StepNodeData).params!.clip}`}
-          title={(trimNode.data as StepNodeData).title ?? NODE_DEFS[(trimNode.data as StepNodeData).kind].label}
-          busy={trimBusy}
-          onClip={onClipNode}
-          onSplit={onSplitNode}
-          onClose={() => !trimBusy && setTrimNodeId(null)}
-        />
-      )}
+      {trimNode && (trimNode.data as StepNodeData).params?.clip && (() => {
+        const p = (trimNode.data as StepNodeData).params!;
+        // AI-cut segment → show the FULL source with handles at the cut range; else the clip itself
+        const useSrc = Boolean(p.srcClip);
+        const srcIn = useSrc ? parseFloat(p.srcStart ?? '0') : undefined;
+        const srcOut = useSrc ? parseFloat(p.srcEnd ?? '0') : undefined;
+        return (
+          <TrimSplitModal
+            src={`/api/serve/${useSrc ? p.srcClip : p.clip}`}
+            title={(trimNode.data as StepNodeData).title ?? NODE_DEFS[(trimNode.data as StepNodeData).kind].label}
+            busy={trimBusy}
+            onClip={onClipNode}
+            onSplit={onSplitNode}
+            onClose={() => !trimBusy && setTrimNodeId(null)}
+            initialIn={srcIn}
+            initialOut={srcOut}
+          />
+        );
+      })()}
       {swapPickerOpen && (
         <ModelPickerModal onPick={onPickModel} onClose={() => setSwapPickerOpen(false)} />
       )}
@@ -1891,6 +2003,24 @@ function Inner({ projectId }: { projectId?: string }) {
           onClose={() => !textBusy && setTextEditor(null)}
         />
       )}
+      {assetEditor && (
+        <AssetEditorModal
+          src={`/api/serve/${assetEditor.video}`}
+          initial={assetEditor.items}
+          busy={assetBusy}
+          onApply={applyAsset}
+          onClose={() => !assetBusy && setAssetEditor(null)}
+        />
+      )}
+      {subtitlesEditor && (
+        <SubtitlesEditorModal
+          src={`/api/serve/${subtitlesEditor.video}`}
+          initial={subtitlesEditor.cfg}
+          busy={subtitlesBusy}
+          onApply={applySubtitlesEditor}
+          onClose={() => !subtitlesBusy && setSubtitlesEditor(null)}
+        />
+      )}
       {swapCrop && swapCropFor && (
         <CropVerifyModal
           src={swapCrop.frame ? `/api/serve/${swapCrop.frame}` : null}
@@ -1901,15 +2031,20 @@ function Inner({ projectId }: { projectId?: string }) {
           onAutoDetect={autoDetectSwapCrop}
         />
       )}
-      {firstFrameFor && (
-        <FirstFrameModal
-          src={firstFrameSrc ? `/api/serve/${firstFrameSrc}` : null}
-          stage={ffStage}
-          onApprove={approveFirstFrame}
-          onRegenerate={regenerateFirstFrame}
-          onClose={closeFirstFrame}
-        />
-      )}
+      {firstFrameFor && (() => {
+        // the original clip being swapped (reference video's part) — shown for comparison
+        const orig = (nodes.find((n) => n.id === firstFrameFor)?.data as StepNodeData | undefined)?.params?.clip;
+        return (
+          <FirstFrameModal
+            src={firstFrameSrc ? `/api/serve/${firstFrameSrc}` : null}
+            compareSrc={orig ? `/api/serve/${orig}` : null}
+            stage={ffStage}
+            onApprove={approveFirstFrame}
+            onRegenerate={regenerateFirstFrame}
+            onClose={closeFirstFrame}
+          />
+        );
+      })()}
     </div>
     </StudioActionsContext.Provider>
   );

@@ -35,6 +35,7 @@ export type PipelineNodeKind =
   | 'transition'
   // post
   | 'text'
+  | 'asset'
   | 'subtitles'
   | 'end-card'
   | 'music-mix'
@@ -251,6 +252,16 @@ export const NODE_DEFS: Record<PipelineNodeKind, PipelineNodeDef> = {
     accent: '#facc15',
     icon: 'Type',
     hint: 'On-screen text overlay',
+    hasInput: true,
+    hasOutput: true,
+  },
+  asset: {
+    kind: 'asset',
+    label: 'Asset',
+    category: 'post',
+    accent: '#38bdf8',
+    icon: 'Image',
+    hint: 'Overlay image / gif / video, timed',
     hasInput: true,
     hasOutput: true,
   },

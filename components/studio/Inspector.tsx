@@ -7,6 +7,7 @@ import { NODE_DEFS, type PipelineNodeKind } from '@/lib/pipeline';
 import { PARAM_SCHEMAS, paramValue } from '@/lib/nodeParams';
 import { ANALYSIS_MODELS, estimateAnalysisCost, getAnalysisModel, DEFAULT_ANALYSIS_MODEL } from '@/lib/analysisModels';
 import { iconFor } from '@/components/studio/icons';
+import { uploadAsset } from '@/lib/uploadAsset';
 import type { StepNodeData } from '@/components/studio/nodes/StepNode';
 
 const NODE_WIDTH = 212;
@@ -45,13 +46,10 @@ function UploadButton({
     if (!file) return;
     setBusy(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('folder', FOLDER_FOR_KIND[kind] ?? 'misc');
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (res.ok && data.path) onUploaded(data.path);
-      else console.error('[upload]', data.error);
+      const path = await uploadAsset(file, FOLDER_FOR_KIND[kind] ?? 'misc');
+      onUploaded(path);
+    } catch (err) {
+      console.error('[upload]', err);
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -525,10 +523,25 @@ export function Inspector({
               </div>
             )}
             {(() => {
-              const needsAppDemo = data.kind === 'cc-pip' && !data.params?.appDemo;
+              const pipUseOriginal = data.params?.pipUseOriginal === 'true';
+              const needsAppDemo = data.kind === 'cc-pip' && !pipUseOriginal && !data.params?.appDemo;
               const blocked = !swapModelName || needsAppDemo;
               return (
                 <>
+                  {data.kind === 'cc-pip' && (
+                    <button
+                      onClick={() => onUpdateParam(node.id, 'pipUseOriginal', pipUseOriginal ? 'false' : 'true')}
+                      className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-white/75 transition-colors hover:border-white/20"
+                    >
+                      <span>Use app demo in clip</span>
+                      <span className={`relative h-4 w-7 rounded-full transition-colors ${pipUseOriginal ? 'bg-emerald-500/80' : 'bg-white/15'}`}>
+                        <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${pipUseOriginal ? 'left-3.5' : 'left-0.5'}`} />
+                      </span>
+                    </button>
+                  )}
+                  {data.kind === 'cc-pip' && pipUseOriginal && (
+                    <p className="text-[10px] leading-relaxed text-white/35">Crops your selection, swaps the creator, and pastes it back at the same spot — keeping the app demo already in the clip.</p>
+                  )}
                   <button
                     onClick={() => onApplyMotion(node.id)}
                     disabled={blocked || data.status === 'processing'}
@@ -556,8 +569,8 @@ export function Inspector({
                       Connect an App Demo node to this PiP part — the bg-removed creator gets composited over it.
                     </p>
                   )}
-                  {data.kind === 'cc-pip' && data.params?.appDemo && (
-                    <p className="text-[10px] leading-relaxed text-emerald-300/70">App demo connected ✓</p>
+                  {data.kind === 'cc-pip' && !pipUseOriginal && data.params?.appDemo && (
+                    <p className="text-[10px] leading-relaxed text-emerald-300/70">External app demo connected ✓</p>
                   )}
                 </>
               );
