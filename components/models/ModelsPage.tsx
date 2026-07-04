@@ -41,6 +41,7 @@ function GenerateModal({
   onAddCategory: (name: string) => void;
   defaultGender?: 'female' | 'male';
 }) {
+  const [tab, setTab] = useState<'generate' | 'upload'>('generate');
   const [prompt, setPrompt] = useState('');
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'female' | 'male'>(defaultGender);
@@ -53,6 +54,51 @@ function GenerateModal({
   const [result, setResult] = useState<ModelRow | null>(null);
   const [newCat, setNewCat] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  // upload tab
+  const [upFile, setUpFile] = useState<File | null>(null);
+  const [upPreview, setUpPreview] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const upRef = useRef<HTMLInputElement>(null);
+
+  function pickUpload(f: File | null) {
+    setUpFile(f);
+    setUpPreview((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return f ? URL.createObjectURL(f) : null;
+    });
+  }
+
+  async function uploadModel() {
+    if (!upFile) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', upFile);
+      fd.append('folder', 'models');
+      const upRes = await fetch('/api/upload', { method: 'POST', body: fd });
+      const up = await upRes.json();
+      if (!upRes.ok) throw new Error(up.error || 'upload failed');
+      const res = await fetch('/api/models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim() || upFile.name.replace(/\.[^.]+$/, ''),
+          description: group, // no gen: prefix — uploads land in the Library sub-section
+          gender,
+          imagePath: up.path,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'saving model failed');
+      onCreated();
+      onClose();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'upload failed');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     fetch('/api/config-status').then((r) => r.json()).then(setKeys).catch(() => {});
@@ -115,10 +161,28 @@ function GenerateModal({
         <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
           <Sparkles className="h-4 w-4 text-violet-400" />
           <span className="flex-1 text-[14px] font-semibold text-white/90">
-            {result ? 'Review generated model' : 'Generate model'}
+            {result ? 'Review generated model' : 'Add model'}
           </span>
           <button onClick={onClose} className="text-white/40 hover:text-white/80"><X className="h-4 w-4" /></button>
         </div>
+
+        {!result && (
+          <div className="flex gap-1 border-b border-white/8 px-4 pt-3 pb-0">
+            {([['generate', 'Generate'], ['upload', 'Upload']] as const).map(([t, label]) => (
+              <button
+                key={t}
+                onClick={() => { setTab(t); setErr(null); }}
+                className={`rounded-t-lg px-3.5 py-2 text-[12.5px] font-medium transition-colors ${
+                  tab === t
+                    ? 'border border-b-0 border-white/10 bg-white/[0.04] text-white/95'
+                    : 'text-white/45 hover:text-white/80'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {result ? (
           // ---------- post-generation review ----------
@@ -139,6 +203,101 @@ function GenerateModal({
               <button onClick={() => { onCreated(); onClose(); }} className="flex items-center gap-1.5 rounded-xl bg-white/90 px-4 py-2 text-[12px] font-semibold text-black hover:bg-white"><Check className="h-3.5 w-3.5" /> Keep</button>
             </div>
           </div>
+        ) : tab === 'upload' ? (
+          // ---------- direct image upload ----------
+          <>
+            <div className="space-y-3 p-4">
+              <input ref={upRef} type="file" accept="image/*" hidden onChange={(e) => pickUpload(e.target.files?.[0] ?? null)} />
+              {upPreview ? (
+                <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={upPreview} alt="Model preview" className="mx-auto max-h-64 w-auto" />
+                  <button
+                    onClick={() => pickUpload(null)}
+                    className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-lg bg-black/55 text-white/75 backdrop-blur-sm hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => upRef.current?.click()}
+                    className="absolute bottom-2 right-2 rounded-lg bg-black/55 px-2.5 py-1 text-[11px] text-white/80 backdrop-blur-sm hover:text-white"
+                  >
+                    Replace
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => upRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOver(false);
+                    const f = e.dataTransfer.files?.[0];
+                    if (f && f.type.startsWith('image/')) pickUpload(f);
+                  }}
+                  className={`flex h-40 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-[12px] transition-colors ${
+                    dragOver ? 'border-white/40 bg-white/[0.05] text-white/85' : 'border-white/15 bg-white/[0.02] text-white/50 hover:border-white/30 hover:text-white/80'
+                  }`}
+                >
+                  <Upload className="h-5 w-5" />
+                  Drop image or click to browse…
+                </button>
+              )}
+
+              <div>
+                <label className="mb-1 block text-[11px] uppercase tracking-wider text-white/40">Gender</label>
+                <div className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
+                  {(['female', 'male'] as const).map((g) => (
+                    <button key={g} type="button" onClick={() => setGender(g)} className={`flex-1 rounded-md px-2 py-1.5 text-[12px] font-medium capitalize transition-colors ${gender === g ? 'bg-[var(--gold-soft)] text-[var(--gold-bright)]' : 'text-white/50 hover:text-white/80'}`}>{g}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-[11px] uppercase tracking-wider text-white/40">Name</label>
+                  <input value={name} onChange={(e) => setName(e.target.value)} placeholder="defaults to file name" className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-[12.5px] text-white/85 outline-none placeholder:text-white/25 focus:border-white/30" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] uppercase tracking-wider text-white/40">Category</label>
+                  <select
+                    value={group}
+                    onChange={(e) => { if (e.target.value === '__new') { setNewCat(' '); } else setGroup(e.target.value); }}
+                    className="w-full appearance-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-[12.5px] text-white/85 outline-none focus:border-white/30"
+                  >
+                    {categories.map((g) => (<option key={g} value={g} className="bg-[#15171c]">{g}</option>))}
+                    <option value="__new" className="bg-[#15171c]">+ New category…</option>
+                  </select>
+                  {newCat !== '' && (
+                    <input
+                      autoFocus
+                      value={newCat.trim() === '' ? '' : newCat}
+                      onChange={(e) => setNewCat(e.target.value)}
+                      onBlur={() => { const n = newCat.trim(); if (n) { onAddCategory(n); setGroup(n); } setNewCat(''); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { const n = newCat.trim(); if (n) { onAddCategory(n); setGroup(n); } setNewCat(''); } if (e.key === 'Escape') setNewCat(''); }}
+                      placeholder="New category name"
+                      className="mt-1.5 w-full rounded-lg border border-white/15 bg-white/[0.05] px-2.5 py-1.5 text-[12px] text-white outline-none"
+                    />
+                  )}
+                </div>
+              </div>
+              {err && <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-2 text-[11.5px] text-red-200">{err}</p>}
+            </div>
+            <div className="flex items-center justify-between border-t border-white/8 px-4 py-3">
+              <span className="text-[11.5px] text-white/45">Free — no generation cost</span>
+              <div className="flex gap-2">
+                <button onClick={onClose} className="rounded-xl border border-white/10 px-3.5 py-2 text-[12.5px] text-white/70 hover:text-white/95">Cancel</button>
+                <button
+                  onClick={uploadModel}
+                  disabled={busy || !upFile}
+                  className="flex items-center gap-1.5 rounded-xl bg-white/90 px-4 py-2 text-[12.5px] font-semibold text-black hover:bg-white active:scale-95 disabled:opacity-50"
+                >
+                  {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {busy ? 'Uploading…' : 'Add model'}
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
           // ---------- generation form ----------
           <>
@@ -425,7 +584,7 @@ export function ModelsPage() {
             onClick={() => setModal(true)}
             className="flex items-center gap-1.5 rounded-xl bg-white/90 px-3.5 py-2 text-[13px] font-semibold text-black shadow-lg transition-all hover:bg-white active:scale-95"
           >
-            <Plus className="h-4 w-4" /> Generate model
+            <Plus className="h-4 w-4" /> Add model
           </button>
         </div>
       </header>
