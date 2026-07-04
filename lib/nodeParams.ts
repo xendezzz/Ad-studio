@@ -81,19 +81,21 @@ export const PARAM_SCHEMAS: Record<PipelineNodeKind, ParamField[]> = {
     },
   ],
   voice: [
+    // real options come from the ElevenLabs library — the Inspector fetches them live;
+    // the node pill shows params.voiceName (set when a voice is picked).
+    {
+      key: 'voiceId',
+      label: 'Voice',
+      control: 'select',
+      options: [],
+      default: '',
+    },
     {
       key: 'engine',
       label: 'Engine',
       control: 'select',
       options: ['ElevenLabs'],
       default: 'ElevenLabs',
-    },
-    {
-      key: 'voiceId',
-      label: 'Voice',
-      control: 'select',
-      options: ['Aria', 'Maya', 'Leo'],
-      default: 'Aria',
     },
   ],
   combine: [
@@ -195,6 +197,10 @@ export function paramValue(
   key: string,
   params?: Record<string, string>,
 ): string {
+  // voice: show the picked voice's NAME, not the raw ElevenLabs id
+  if (kind === 'voice' && key === 'voiceId') {
+    return params?.voiceName ?? (params?.voiceId ? 'Custom voice' : 'Pick a voice…');
+  }
   const field = (PARAM_SCHEMAS[kind] ?? []).find((f) => f.key === key);
   return params?.[key] ?? field?.default ?? '';
 }

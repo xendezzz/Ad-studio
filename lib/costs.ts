@@ -10,7 +10,9 @@ export const COST_USD = {
   pipSwap: 0.7, // Kling motion-control + bg-removal + composite for a PiP clip
   bgRemove: 0.1, // ben/v2 background removal
   subtitles: 0.03, // Whisper transcription + caption burn for one clip
-  tts: 0.1, // ElevenLabs voice for one clip
+  tts: 0.1, // ElevenLabs voice change (speech-to-speech) for one clip
+  transcribe: 0.03, // Whisper transcription (subtitles etc.)
+  voiceDesign: 0.3, // ElevenLabs Voice Design (3 previews)
 } as const;
 
 export type CostKind = keyof typeof COST_USD;

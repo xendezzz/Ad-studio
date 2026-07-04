@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Motion control failed';
+    console.error('[motion-control] request failed:', message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

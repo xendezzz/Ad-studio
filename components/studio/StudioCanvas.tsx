@@ -38,6 +38,7 @@ import { StudioActionsContext } from '@/components/studio/studioActions';
 import { TextEditorModal, type TextItem } from '@/components/studio/TextEditorModal';
 import { AssetEditorModal, type AssetItem } from '@/components/studio/AssetEditorModal';
 import { SubtitlesEditorModal, type SubtitleConfig, DEFAULT_SUB_CONFIG } from '@/components/studio/SubtitlesEditorModal';
+import { VoiceEditorModal, type VoiceApplyPayload } from '@/components/studio/VoiceEditorModal';
 import { NODE_DEFS, type PipelineNodeKind } from '@/lib/pipeline';
 import { projectsStore } from '@/lib/projectsStore';
 
@@ -185,6 +186,8 @@ function Inner({ projectId }: { projectId?: string }) {
   const [assetBusy, setAssetBusy] = useState(false);
   // Subtitles editor (style / font / size / stroke / position)
   const [subtitlesEditor, setSubtitlesEditor] = useState<{ nodeId: string; video: string; cfg: SubtitleConfig } | null>(null);
+  const [voiceEditor, setVoiceEditor] = useState<{ nodeId: string; video: string; voiceId: string | null } | null>(null);
+  const [voiceBusy, setVoiceBusy] = useState(false);
   const [subtitlesBusy, setSubtitlesBusy] = useState(false);
   // user-facing error/result surfaced in the OutputPanel
   const [error, setError] = useState<string | null>(null);
@@ -1430,7 +1433,7 @@ function Inner({ projectId }: { projectId?: string }) {
   // Scale: duplicate the whole pipeline once per selected model (stacked below as its own row),
   // tagged with the model, swap outputs cleared. Then batch-generate every first frame for review.
   const scaleAcross = useCallback(
-    async (models: { id: string; name: string; imagePath: string | null }[]) => {
+    async (models: { id: string; name: string; imagePath: string | null; voiceId?: string }[]) => {
       const allNodes = liveRef.current.nodes;
       const es = liveRef.current.edges;
       if (!allNodes.length || !models.length) return;
@@ -1518,6 +1521,56 @@ function Inner({ projectId }: { projectId?: string }) {
           if (idMap[e.source] && idMap[e.target])
             newEdges.push({ id: `${e.id}__s${mi}`, source: idMap[e.source], target: idMap[e.target] });
         });
+        // per-model voice change: override the row's Voice node, or inject one if the
+        // reference pipeline has none (auto-transcribes the swapped clip's speech).
+        if (m.voiceId) {
+          const rowVoice = rowNodes.find((n) => (n.data as StepNodeData).kind === 'voice');
+          if (rowVoice) {
+            const d = rowVoice.data as StepNodeData;
+            d.params = { ...(d.params ?? {}), voiceId: m.voiceId };
+          } else {
+            const exportNode = rowNodes.find((n) => (n.data as StepNodeData).kind === 'export');
+            const seqNode = rowNodes.find((n) => (n.data as StepNodeData).kind === 'sequence');
+            const voiceId = `voice-${stamp}-${mi}`;
+            const voiceData = {
+              kind: 'voice',
+              title: 'Voice',
+              params: { scaleGroup: m.name, voiceId: m.voiceId },
+            } as StepNodeData;
+            if (exportNode) {
+              // splice: <source> → Voice → Export
+              const inIdx = newEdges.findIndex((e) => e.target === exportNode.id);
+              const srcId = inIdx >= 0 ? newEdges[inIdx].source : null;
+              const srcNode = srcId ? rowNodes.find((n) => n.id === srcId) : null;
+              const vNode: Node = {
+                id: voiceId, type: 'step', selected: false,
+                position: {
+                  x: srcNode ? (srcNode.position.x + exportNode.position.x) / 2 : exportNode.position.x - 320,
+                  y: exportNode.position.y + NODE_H + 60,
+                },
+                data: voiceData,
+              };
+              newNodes.push(vNode);
+              rowNodes.push(vNode);
+              if (inIdx >= 0) {
+                const inEdge = newEdges[inIdx];
+                newEdges.splice(inIdx, 1);
+                newEdges.push({ id: `${inEdge.id}-v`, source: inEdge.source, target: voiceId });
+              }
+              newEdges.push({ id: `e-${voiceId}-out`, source: voiceId, target: exportNode.id });
+            } else if (seqNode) {
+              // no export in the reference — hang the Voice step off the sequence output
+              const vNode: Node = {
+                id: voiceId, type: 'step', selected: false,
+                position: { x: seqNode.position.x + 340, y: seqNode.position.y },
+                data: voiceData,
+              };
+              newNodes.push(vNode);
+              rowNodes.push(vNode);
+              newEdges.push({ id: `e-${voiceId}-in`, source: seqNode.id, target: voiceId });
+            }
+          }
+        }
         // labeled boundary around this model's row
         newFrames.push(makeFrame(`frame-${stamp}-${mi}`, m.name, boundsOf(rowNodes), false, '#8b7bf7'));
       });
@@ -1628,8 +1681,68 @@ function Inner({ projectId }: { projectId?: string }) {
         setSubtitlesEditor({ nodeId, video: inClip, cfg });
         return;
       }
+
+      if (kind === 'voice') {
+        if (!inClip) {
+          setError('Connect a video into the Voice node first.');
+          return;
+        }
+        const params = (node?.data as StepNodeData | undefined)?.params;
+        setError(null);
+        setVoiceEditor({ nodeId, video: inClip, voiceId: params?.voiceId ?? null });
+        return;
+      }
     },
     [setNodes, setNodeStatus],
+  );
+
+  // Voice editor "Apply" → TTS the script with the chosen/designed voice, mute the original audio
+  const applyVoiceEditor = useCallback(
+    async (payload: VoiceApplyPayload) => {
+      const ctx = voiceEditor;
+      if (!ctx) return;
+      setVoiceBusy(true);
+      setNodeStatus(ctx.nodeId, 'processing');
+      try {
+        const res = await fetch('/api/voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ video: ctx.video, ...payload }),
+        });
+        const d = await res.json();
+        if (res.ok && d.clip) {
+          setNodes((nds) =>
+            nds.map((n) =>
+              n.id === ctx.nodeId
+                ? {
+                    ...n,
+                    data: {
+                      ...n.data,
+                      status: 'completed',
+                      params: {
+                        ...((n.data as StepNodeData).params ?? {}),
+                        clip: d.clip,
+                        ...(d.voiceId ? { voiceId: d.voiceId } : {}),
+                        ...(payload.voiceName ? { voiceName: payload.voiceName } : {}),
+                      },
+                    },
+                  }
+                : n,
+            ),
+          );
+          setVoiceEditor(null);
+        } else {
+          setNodeStatus(ctx.nodeId, 'failed');
+          setError(d.error ? `Voice failed — ${d.error}` : 'Voice apply failed.');
+        }
+      } catch {
+        setNodeStatus(ctx.nodeId, 'failed');
+        setError('Voice apply failed.');
+      } finally {
+        setVoiceBusy(false);
+      }
+    },
+    [voiceEditor, setNodes, setNodeStatus],
   );
 
   // Text editor "Apply" → burn the text/emoji items onto the input clip
@@ -2010,6 +2123,15 @@ function Inner({ projectId }: { projectId?: string }) {
           busy={assetBusy}
           onApply={applyAsset}
           onClose={() => !assetBusy && setAssetEditor(null)}
+        />
+      )}
+      {voiceEditor && (
+        <VoiceEditorModal
+          src={`/api/serve/${voiceEditor.video}`}
+          initialVoiceId={voiceEditor.voiceId}
+          busy={voiceBusy}
+          onApply={applyVoiceEditor}
+          onClose={() => !voiceBusy && setVoiceEditor(null)}
         />
       )}
       {subtitlesEditor && (

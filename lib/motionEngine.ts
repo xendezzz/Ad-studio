@@ -14,9 +14,15 @@
  * Inputs/outputs are Supabase Storage object PATHS. The adapter signs URLs for the
  * engine to fetch, runs the job, downloads the result, and re-uploads to Storage.
  */
+import path from 'path';
+import { promises as fs } from 'fs';
+import { execFileSync } from 'child_process';
 import { fal } from '@fal-ai/client';
 import { config } from './config';
-import { getSignedUrl, uploadBuffer } from './storage';
+import { getSignedUrl, uploadBuffer, uploadFile, downloadToPath } from './storage';
+import { getFfmpeg, getFfprobe } from './ffmpegBinaries';
+import { getVideoDuration } from './serverUtils';
+import { createTempWorkspace, cleanupTempWorkspace } from './tempWorkspace';
 
 export interface MotionControlInput {
   /** Persona still — Supabase Storage object path. */
@@ -52,6 +58,45 @@ export interface MotionEngine {
 
 const FAL_MOTION_CONTROL_ENDPOINT = 'fal-ai/kling-video/v2.6/standard/motion-control';
 
+/** Kling won't accept very short drivers — clips under this are slowed to exactly this length. */
+const MIN_DRIVER_SEC = 5;
+
+/** ffmpeg atempo only accepts 0.5–2.0 per stage; chain stages for factors outside that. */
+function atempoChain(factor: number): string {
+  const parts: string[] = [];
+  let r = factor;
+  while (r < 0.5) { parts.push('atempo=0.5'); r /= 0.5; }
+  while (r > 2) { parts.push('atempo=2.0'); r /= 2; }
+  parts.push(`atempo=${r.toFixed(6)}`);
+  return parts.join(',');
+}
+
+function hasAudioStream(local: string): boolean {
+  try {
+    const out = execFileSync(
+      getFfprobe(),
+      ['-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=codec_type', '-of', 'csv=p=0', local],
+      { encoding: 'utf-8' },
+    ).trim();
+    return out.includes('audio');
+  } catch {
+    return false;
+  }
+}
+
+/** Re-time a clip: speed > 1 = faster/shorter, speed < 1 = slower/longer (audio pitch preserved). */
+function retimeClip(inLocal: string, outLocal: string, speed: number): void {
+  const withAudio = hasAudioStream(inLocal);
+  const args = withAudio
+    ? ['-filter_complex', `[0:v]setpts=PTS/${speed}[v];[0:a]${atempoChain(speed)}[a]`, '-map', '[v]', '-map', '[a]', '-c:a', 'aac']
+    : ['-vf', `setpts=PTS/${speed}`, '-an'];
+  execFileSync(
+    getFfmpeg(),
+    ['-y', '-i', inLocal, ...args, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'fast', outLocal],
+    { timeout: 300000, maxBuffer: 50 * 1024 * 1024 },
+  );
+}
+
 let _falConfigured = false;
 function ensureFalConfigured() {
   if (!_falConfigured) {
@@ -65,10 +110,34 @@ export const falKlingEngine: MotionEngine = {
   async motionControl(input: MotionControlInput): Promise<MotionControlResult> {
     ensureFalConfigured();
 
+    // Kling rejects very short drivers — slow a <5s clip to exactly 5s first, and
+    // remember the factor so the swapped output is sped back to the true duration.
+    const ws = createTempWorkspace('mc-retime');
+    try {
+    let driverVideoPath = input.driverVideoPath;
+    let slowFactor = 1; // <1 means the driver was slowed down
+    try {
+      const driverLocal = path.join(ws, 'driver.mp4');
+      await downloadToPath(input.driverVideoPath, driverLocal);
+      const dur = getVideoDuration(driverLocal) || 0;
+      if (dur > 0 && dur < MIN_DRIVER_SEC) {
+        slowFactor = dur / MIN_DRIVER_SEC;
+        console.warn(`[motion-control] driver is ${dur.toFixed(2)}s (<${MIN_DRIVER_SEC}s) — slowing to ${MIN_DRIVER_SEC}s for Kling`);
+        const slowedLocal = path.join(ws, 'driver-slow.mp4');
+        retimeClip(driverLocal, slowedLocal, slowFactor);
+        driverVideoPath = await uploadFile(slowedLocal, { folder: 'gen/motion-control', contentType: 'video/mp4' });
+      }
+    } catch (e) {
+      // pre-timing is best-effort — fall back to the original driver
+      console.warn('[motion-control] duration pre-check failed, using original driver:', e instanceof Error ? e.message : e);
+      driverVideoPath = input.driverVideoPath;
+      slowFactor = 1;
+    }
+
     // Sign the inputs so FAL can fetch them.
     const [imageUrl, videoUrl] = await Promise.all([
       getSignedUrl(input.imagePath, 3600),
-      getSignedUrl(input.driverVideoPath, 3600),
+      getSignedUrl(driverVideoPath, 3600),
     ]);
 
     // One submit+poll at a given orientation.
@@ -93,6 +162,10 @@ export const falKlingEngine: MotionEngine = {
       const msg = (e instanceof Error ? e.message : String(e)) + ' ' + JSON.stringify((e as { body?: unknown })?.body ?? '');
       return /upper body|character_orientation|no complete/i.test(msg);
     };
+    const describeFalError = (e: unknown) => {
+      const body = (e as { body?: unknown })?.body;
+      return `${e instanceof Error ? e.message : String(e)}${body ? ` — body: ${JSON.stringify(body)}` : ''}`;
+    };
     const primary = input.characterOrientation ?? 'video';
     const fallback = primary === 'video' ? 'image' : 'video';
     let request_id: string;
@@ -100,9 +173,20 @@ export const falKlingEngine: MotionEngine = {
     try {
       ({ result, request_id } = await runAt(primary));
     } catch (e) {
-      if (!isUpperBodyReject(e)) throw e;
+      if (!isUpperBodyReject(e)) {
+        console.error(`[motion-control] FAL "${primary}" failed: ${describeFalError(e)}`);
+        throw e;
+      }
       console.warn(`[motion-control] "${primary}" orientation rejected (upper-body check) — retrying with "${fallback}"`);
-      ({ result, request_id } = await runAt(fallback));
+      try {
+        ({ result, request_id } = await runAt(fallback));
+      } catch (e2) {
+        console.error(`[motion-control] FAL retry "${fallback}" also failed: ${describeFalError(e2)}`);
+        throw new Error(
+          `Kling rejected both orientations — the part clip (and its first frame) likely doesn't show a complete upper body. ` +
+          `FAL said: ${describeFalError(e2)}`,
+        );
+      }
     }
 
     const videoData =
@@ -114,12 +198,26 @@ export const falKlingEngine: MotionEngine = {
     const res = await fetch(videoData.url);
     if (!res.ok) throw new Error(`Failed to download motion-control output (${res.status})`);
     const buffer = Buffer.from(await res.arrayBuffer());
-    const outputPath = await uploadBuffer(buffer, `motion-${request_id}.mp4`, {
-      folder: 'gen/motion-control',
-      contentType: 'video/mp4',
-    });
+
+    let outputPath: string;
+    if (slowFactor < 1) {
+      // driver was slowed to meet the 5s minimum — speed the swap back to the true duration
+      const swapLocal = path.join(ws, 'swap.mp4');
+      await fs.writeFile(swapLocal, buffer);
+      const restoredLocal = path.join(ws, 'swap-restored.mp4');
+      retimeClip(swapLocal, restoredLocal, 1 / slowFactor);
+      outputPath = await uploadFile(restoredLocal, { folder: 'gen/motion-control', contentType: 'video/mp4' });
+    } else {
+      outputPath = await uploadBuffer(buffer, `motion-${request_id}.mp4`, {
+        folder: 'gen/motion-control',
+        contentType: 'video/mp4',
+      });
+    }
 
     return { outputPath, externalRequestId: request_id };
+    } finally {
+      cleanupTempWorkspace(ws);
+    }
   },
 };
 

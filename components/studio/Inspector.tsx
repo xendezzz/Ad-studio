@@ -13,6 +13,74 @@ import type { StepNodeData } from '@/components/studio/nodes/StepNode';
 const NODE_WIDTH = 212;
 const PANEL_WIDTH = 252;
 
+// ElevenLabs voice library — fetched once per session, shared by every voice inspector
+let voiceLibCache: { voiceId: string; name: string }[] | null = null;
+
+/** Live voice picker for the Voice node: search + full ElevenLabs library. */
+function VoiceLibrarySelect({
+  value,
+  onPick,
+}: {
+  value: string;
+  onPick: (voiceId: string, name: string) => void;
+}) {
+  const [voices, setVoices] = useState<{ voiceId: string; name: string }[] | null>(voiceLibCache);
+  const [q, setQ] = useState('');
+
+  useEffect(() => {
+    if (voiceLibCache) return;
+    fetch('/api/voice/voices')
+      .then((r) => r.json())
+      .then((d) => {
+        voiceLibCache = Array.isArray(d.voices) ? d.voices : [];
+        setVoices(voiceLibCache);
+      })
+      .catch(() => setVoices([]));
+  }, []);
+
+  const filtered = (voices ?? []).filter((v) => !q || v.name.toLowerCase().includes(q.toLowerCase()));
+  const shown = filtered.slice(0, 200);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2">
+        <Search className="h-3 w-3 shrink-0 text-white/30" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={voices === null ? 'Loading voices…' : `Search ${voices.length} voices…`}
+          className="w-full bg-transparent py-1.5 text-[11.5px] text-white/85 outline-none placeholder:text-white/30"
+        />
+      </div>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => {
+            const v = (voices ?? []).find((x) => x.voiceId === e.target.value);
+            if (v) onPick(v.voiceId, v.name);
+          }}
+          className="w-full appearance-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 pr-7 text-[12px] text-white/85 outline-none transition-colors hover:border-white/20 focus:border-white/30"
+        >
+          <option value="" className="bg-[#15171c]">Pick a voice…</option>
+          {value && !shown.some((v) => v.voiceId === value) && (
+            <option value={value} className="bg-[#15171c]">{(voices ?? []).find((v) => v.voiceId === value)?.name ?? 'Current voice'}</option>
+          )}
+          {shown.map((v) => (
+            <option key={v.voiceId} value={v.voiceId} className="bg-[#15171c]">{v.name}</option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/35" />
+      </div>
+      {filtered.length > 200 && (
+        <p className="text-[9.5px] text-white/30">Showing first 200 of {filtered.length} — refine the search.</p>
+      )}
+      <p className="text-[10px] leading-relaxed text-white/35">
+        To hear previews or design a brand-new voice, click <span className="text-white/60">Edit voice</span> on the node.
+      </p>
+    </div>
+  );
+}
+
 // the creator-containing parts you can swap a model into (not app-demo / reference / music)
 const SWAPPABLE_KINDS = new Set<PipelineNodeKind>(['cc-hook', 'cc-pip', 'cc-aroll', 'cc-broll', 'hook']);
 
@@ -469,6 +537,23 @@ export function Inspector({
         )}
         {fields.map((f) => {
           const value = paramValue(data.kind, f.key, data.params);
+          // voice node: real ElevenLabs library with search, not the static schema options
+          if (data.kind === 'voice' && f.key === 'voiceId') {
+            return (
+              <div key={f.key}>
+                <label className="mb-1 block text-[10px] uppercase tracking-wider text-white/35">
+                  {f.label}
+                </label>
+                <VoiceLibrarySelect
+                  value={data.params?.voiceId ?? ''}
+                  onPick={(voiceId, name) => {
+                    onUpdateParam(node.id, 'voiceId', voiceId);
+                    onUpdateParam(node.id, 'voiceName', name);
+                  }}
+                />
+              </div>
+            );
+          }
           return (
             <div key={f.key}>
               <label className="mb-1 block text-[10px] uppercase tracking-wider text-white/35">

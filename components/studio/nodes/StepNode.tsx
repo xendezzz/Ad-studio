@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { MoreHorizontal, ChevronDown, Check, AlertCircle, Play, Loader2, Captions, Type, Image as ImageIcon, Download } from 'lucide-react';
+import { MoreHorizontal, ChevronDown, Check, AlertCircle, Play, Loader2, Captions, Type, Image as ImageIcon, Mic, Download } from 'lucide-react';
 import { NODE_DEFS, type PipelineNodeKind } from '@/lib/pipeline';
 import { primaryParam, paramValue } from '@/lib/nodeParams';
 import { iconFor } from '@/components/studio/icons';
@@ -73,6 +73,7 @@ const PREVIEW: Partial<Record<PipelineNodeKind, { tag: string; empty: string }>>
   text: { tag: 'Preview', empty: 'No output yet' },
   asset: { tag: 'Preview', empty: 'No assets yet' },
   subtitles: { tag: 'Preview', empty: 'No output yet' },
+  voice: { tag: 'Voiced', empty: 'No output yet' },
   'end-card': { tag: 'Outro', empty: 'No output yet' },
   export: { tag: '9:16 · MP4', empty: 'No export yet' },
 };
@@ -223,6 +224,18 @@ function StepNodeImpl({ id, data, selected }: NodeProps) {
           >
             {d.status === 'processing' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
             {d.status === 'processing' ? 'Rendering…' : 'Edit assets'}
+          </button>
+        )}
+
+        {/* Voice node CTA — transcribe, pick/design a voice, replace the clip's audio */}
+        {d.kind === 'voice' && (
+          <button
+            onClick={() => onApply(id)}
+            disabled={d.status === 'processing'}
+            className="nodrag mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg bg-white/90 py-1.5 text-[12px] font-semibold text-black transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {d.status === 'processing' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mic className="h-3.5 w-3.5" />}
+            {d.status === 'processing' ? 'Applying…' : 'Edit voice'}
           </button>
         )}
 

@@ -20,7 +20,16 @@ export interface AnalysisModel {
 }
 
 export const ANALYSIS_MODELS: AnalysisModel[] = [
-  // ordered best → cheapest; the first entry is the default everywhere (analysis + clip split)
+  // ordered best → cheapest; the default (analysis + clip split) is set explicitly below
+  {
+    id: 'claude:fable-5',
+    label: 'Claude Fable 5 · direct',
+    provider: 'anthropic',
+    anthropicModel: 'claude-fable-5',
+    needs: 'anthropic',
+    maxFrames: 24,
+    note: 'Most capable — highest accuracy, ~2× Opus price. Needs ANTHROPIC_API_KEY.',
+  },
   {
     id: 'claude:opus-4-8',
     label: 'Claude Opus 4.8 · direct',
@@ -50,7 +59,7 @@ export const ANALYSIS_MODELS: AnalysisModel[] = [
   },
 ];
 
-export const DEFAULT_ANALYSIS_MODEL = ANALYSIS_MODELS[0].id;
+export const DEFAULT_ANALYSIS_MODEL = 'claude:opus-4-8';
 
 export function getAnalysisModel(id?: string): AnalysisModel {
   return ANALYSIS_MODELS.find((m) => m.id === id) ?? ANALYSIS_MODELS[0];
@@ -74,9 +83,10 @@ export function estimateAnalysisCost(durationSec: number, modelId?: string): Ana
     // one montage image + prompt — flat, per underlying model
     visionCost = m.falModel?.includes('claude') ? 0.05 : 0.012;
   } else {
-    // Claude direct: frames as separate images. Opus 4.8 $5/1M in, $25/1M out.
+    // Claude direct: frames as separate images. Opus 4.8 $5/$25 per 1M in/out; Fable 5 $10/$50.
+    const [inRate, outRate] = m.anthropicModel === 'claude-fable-5' ? [10, 50] : [5, 25];
     const inputTokens = frames * 700 + 1500;
-    visionCost = inputTokens * (5 / 1_000_000) + 1200 * (25 / 1_000_000);
+    visionCost = inputTokens * (inRate / 1_000_000) + 1200 * (outRate / 1_000_000);
   }
   const transcriptCost = ((durationSec || 0) / 60) * WHISPER_PER_MIN;
   return { frames, visionCost, transcriptCost, totalCost: visionCost + transcriptCost };

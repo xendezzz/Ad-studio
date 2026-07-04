@@ -64,6 +64,43 @@ export async function textToSpeech(opts: {
   return Buffer.from(await res.arrayBuffer());
 }
 
+/**
+ * Audio Isolation: extracts the spoken voice from a mix (music/SFX removed).
+ * Input/output are audio Buffers. Output is time-aligned with the input, which
+ * lets callers recover the background by subtracting it from the original.
+ */
+export async function isolateVoice(audio: Buffer): Promise<Buffer> {
+  const form = new FormData();
+  form.append('audio', new Blob([new Uint8Array(audio)], { type: 'audio/wav' }), 'audio.wav');
+  const res = await elevenFetch('/audio-isolation', { method: 'POST', body: form });
+  return Buffer.from(await res.arrayBuffer());
+}
+
+/**
+ * Speech-to-speech voice conversion: keeps the source performance (timing, pauses,
+ * emphasis, duration) and swaps only the voice. Input/output are audio Buffers (MP3).
+ */
+export async function speechToSpeech(opts: {
+  audio: Buffer;
+  voiceId?: string;
+  modelId?: string;
+  outputFormat?: string;
+}): Promise<Buffer> {
+  const voiceId = opts.voiceId || config.elevenLabsDefaultVoiceId;
+  if (!voiceId) throw new Error('No voiceId provided and ELEVENLABS_DEFAULT_VOICE_ID not configured');
+
+  const form = new FormData();
+  form.append('audio', new Blob([new Uint8Array(opts.audio)], { type: 'audio/mpeg' }), 'audio.mp3');
+  form.append('model_id', opts.modelId || 'eleven_multilingual_sts_v2');
+
+  const outputFormat = opts.outputFormat || DEFAULT_OUTPUT_FORMAT;
+  const res = await elevenFetch(
+    `/speech-to-speech/${voiceId}?output_format=${encodeURIComponent(outputFormat)}`,
+    { method: 'POST', body: form },
+  );
+  return Buffer.from(await res.arrayBuffer());
+}
+
 export type VoicePreview = {
   audioBase64: string;       // base64-encoded MP3 preview
   generatedVoiceId: string;  // pass to saveDesignedVoice() to keep it
@@ -128,10 +165,10 @@ export async function saveDesignedVoice(opts: {
 /**
  * List voices available to the account.
  */
-export async function listVoices(): Promise<Array<{ voiceId: string; name: string; category?: string }>> {
+export async function listVoices(): Promise<Array<{ voiceId: string; name: string; category?: string; previewUrl?: string }>> {
   const res = await elevenFetch('/voices', { method: 'GET' });
   const data = (await res.json()) as {
-    voices?: Array<{ voice_id: string; name: string; category?: string }>;
+    voices?: Array<{ voice_id: string; name: string; category?: string; preview_url?: string }>;
   };
-  return (data.voices || []).map((v) => ({ voiceId: v.voice_id, name: v.name, category: v.category }));
+  return (data.voices || []).map((v) => ({ voiceId: v.voice_id, name: v.name, category: v.category, previewUrl: v.preview_url }));
 }

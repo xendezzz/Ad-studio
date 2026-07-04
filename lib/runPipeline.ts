@@ -20,7 +20,7 @@ import { applyTextOverlays, type TextItem } from './textBurn';
 import { applyAssetOverlays, type AssetItem } from './assetBurn';
 import { applySubtitles } from './subtitlesBurn';
 import { mixAudio, concatVideos, xfadeVideos } from './ffmpegMediaOps';
-import { textToSpeech } from './elevenlabs';
+import { applyVoice } from './voiceApply';
 import { createTempWorkspace, cleanupTempWorkspace } from './tempWorkspace';
 import { downloadToPath, uploadFile } from './storage';
 import { GenJobs, PipelineRuns, Ads } from './db';
@@ -381,22 +381,11 @@ async function executeNode(
       return { kind: node.kind, videoPath: await uploadFile(out, { folder: 'gen/music' }) };
     }
 
-    // --- voice: ElevenLabs TTS, replace the input audio (needs ELEVENLABS_API_KEY) ---
+    // --- voice: ElevenLabs speech-to-speech — converts the clip's own audio to the
+    // chosen voice, keeping the original timing/performance (needs ELEVENLABS_API_KEY) ---
     case 'voice': {
-      if (!inVideo) return { kind: node.kind, videoPath: inVideo };
-      const text = p.text?.trim();
-      if (!text) return { kind: node.kind, videoPath: inVideo };
-      const mp3 = await textToSpeech({ text, voiceId: p.voiceId || undefined });
-      const local = await dl(workspace, inVideo, '.mp4');
-      const voFile = path.join(workspace, `vo-${Date.now()}.mp3`);
-      await fs.writeFile(voFile, mp3);
-      const out = path.join(workspace, `voiced-${Date.now()}.mp4`);
-      execFileSync(
-        getFfmpeg(),
-        ['-y', '-i', local, '-i', voFile, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-shortest', out],
-        { timeout: 300000, maxBuffer: 50 * 1024 * 1024 },
-      );
-      return { kind: node.kind, videoPath: await uploadFile(out, { folder: 'gen/voice' }) };
+      if (!inVideo || !p.voiceId) return { kind: node.kind, videoPath: inVideo };
+      return { kind: node.kind, videoPath: await applyVoice(inVideo, { voiceId: p.voiceId }) };
     }
 
     // --- sequence / export: join incoming clips in top→bottom (Y) order. A transition node wired
