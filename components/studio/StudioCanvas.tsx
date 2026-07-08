@@ -1216,18 +1216,19 @@ function Inner({ projectId }: { projectId?: string }) {
   }, [firstFrameFor, swapModel, swapCropBox, runFirstFrame]);
 
   // approved first frame → store it as the ad reference (first time), then run the video swap
-  const approveFirstFrame = useCallback(async () => {
+  // in the background: close the modal right away so the part shows "processing" on the canvas
+  // and other parts can start their own motion-control jobs in parallel.
+  const approveFirstFrame = useCallback(() => {
     const nodeId = firstFrameFor;
     const image = firstFrameSrc;
     if (!nodeId || !image) return;
     const crop = swapCropBox ?? undefined;
     setSwapReference((prev) => prev ?? image); // first approved swap becomes the reusable reference
-    setFfStage('video');
-    await runVideoSwap(nodeId, image, crop);
     setFirstFrameFor(null);
     setFirstFrameSrc(null);
     setFfStage('idle');
     setSwapCropBox(null);
+    void runVideoSwap(nodeId, image, crop);
   }, [firstFrameFor, firstFrameSrc, swapCropBox, runVideoSwap]);
 
   const closeFirstFrame = useCallback(() => {

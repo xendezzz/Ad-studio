@@ -19,7 +19,7 @@ import { addTextOverlay } from './ffmpegTextOverlay';
 import { applyTextOverlays, type TextItem } from './textBurn';
 import { applyAssetOverlays, type AssetItem } from './assetBurn';
 import { applySubtitles } from './subtitlesBurn';
-import { mixAudio, concatVideos, xfadeVideos } from './ffmpegMediaOps';
+import { mixAudio, concatVideos, xfadeVideos, encodeQuality } from './ffmpegMediaOps';
 import { applyVoice } from './voiceApply';
 import { createTempWorkspace, cleanupTempWorkspace } from './tempWorkspace';
 import { downloadToPath, uploadFile } from './storage';
@@ -394,12 +394,29 @@ async function executeNode(
     case 'export': {
       const videoCount = ins.filter((o) => o.videoPath).length;
       if (!videoCount) throw new Error(`${node.kind} has no input video`);
-      // single clip and no transition → pass it through untouched
-      if (videoCount === 1 && !ins.some((o) => o.transition)) {
-        return { kind: node.kind, videoPath: ins.find((o) => o.videoPath)!.videoPath };
-      }
-      const local = await stitchTimeline(ins, workspace);
+      // export quality tiers (CRF/preset); 'Source' (or sequence nodes) skips the extra encode
+      const QUALITY: Record<string, { crf: number; preset: string }> = {
+        High: { crf: 18, preset: 'medium' },
+        Standard: { crf: 23, preset: 'fast' },
+        Compressed: { crf: 28, preset: 'fast' },
+      };
+      const q = node.kind === 'export' ? QUALITY[p.quality ?? ''] : undefined;
       const folder = node.kind === 'export' ? 'gen/export' : 'gen/sequence';
+      // single clip and no transition → pass it through untouched (unless a quality encode is asked for)
+      if (videoCount === 1 && !ins.some((o) => o.transition)) {
+        const src = ins.find((o) => o.videoPath)!.videoPath!;
+        if (!q) return { kind: node.kind, videoPath: src };
+        const inLocal = await dl(workspace, src, '.mp4');
+        const out = path.join(workspace, `export-${Math.random().toString(36).slice(2)}.mp4`);
+        encodeQuality(inLocal, out, q.crf, q.preset);
+        return { kind: node.kind, videoPath: await uploadFile(out, { folder }) };
+      }
+      let local = await stitchTimeline(ins, workspace);
+      if (q) {
+        const out = path.join(workspace, `export-${Math.random().toString(36).slice(2)}.mp4`);
+        encodeQuality(local, out, q.crf, q.preset);
+        local = out;
+      }
       return { kind: node.kind, videoPath: await uploadFile(local, { folder }) };
     }
 

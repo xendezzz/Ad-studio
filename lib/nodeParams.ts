@@ -183,6 +183,13 @@ export const PARAM_SCHEMAS: Record<PipelineNodeKind, ParamField[]> = {
       options: ['9:16 · MP4', '1:1 · MP4', '16:9 · MP4'],
       default: '9:16 · MP4',
     },
+    {
+      key: 'quality',
+      label: 'Quality',
+      control: 'select',
+      options: ['Source', 'High', 'Standard', 'Compressed'],
+      default: 'Source',
+    },
   ],
 };
 

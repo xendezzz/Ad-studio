@@ -23,15 +23,26 @@ async function probeDuration(videoPath: string): Promise<number> {
 }
 
 /**
- * POST /api/reference-ads/analyze  { videoPath, name?, estimateOnly? }
+ * POST /api/reference-ads/analyze  { videoPath, name?, estimateOnly?, manualSegments? }
  * estimateOnly → { durationSec, cost } (no Claude call).
+ * manualSegments → persists user-made cuts on the reference_ads row (no LLM call),
+ *   keeping any existing transcript so combined-clip alignment still works.
  * else → runs analysis, persists on the reference_ads row, returns the analysis.
  */
 export async function POST(req: NextRequest) {
   try {
-    const { videoPath, name, estimateOnly, model } = await req.json();
+    const { videoPath, name, estimateOnly, model, manualSegments } = await req.json();
     if (!videoPath || typeof videoPath !== 'string') {
       return NextResponse.json({ error: 'videoPath is required' }, { status: 400 });
+    }
+
+    if (Array.isArray(manualSegments)) {
+      const existing = (await ReferenceAds.list()).find((r) => r.videoPath === videoPath);
+      const durationSec = Math.max(0, ...manualSegments.map((s) => Number(s?.endSec) || 0));
+      const payload = { segments: manualSegments, durationSec };
+      if (existing) await ReferenceAds.update(existing.id, payload);
+      else await ReferenceAds.create({ name: name || 'Reference ad', videoPath, ...payload });
+      return NextResponse.json({ ok: true });
     }
 
     if (estimateOnly) {

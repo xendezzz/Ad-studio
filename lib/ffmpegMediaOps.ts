@@ -167,6 +167,24 @@ export function concatVideos(videoPaths: string[], outputPath: string): void {
   ], { maxBuffer: 50 * 1024 * 1024 });
 }
 
+/**
+ * Re-encode a video at a chosen x264 quality (CRF + preset). Audio is re-encoded to AAC
+ * so odd source codecs don't break MP4 output; faststart for web playback.
+ */
+export function encodeQuality(inputPath: string, outputPath: string, crf: number, preset: string): void {
+  execFileSync(getFfmpeg(), [
+    '-y',
+    '-i', inputPath,
+    '-c:v', 'libx264',
+    '-crf', String(crf),
+    '-preset', preset,
+    '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac',
+    '-movflags', '+faststart',
+    outputPath,
+  ], { timeout: 600000, maxBuffer: 50 * 1024 * 1024 });
+}
+
 function probeWH(file: string): { w: number; h: number } {
   try {
     const out = execFileSync(getFfprobe(), [

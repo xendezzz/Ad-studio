@@ -7,6 +7,7 @@ import { NODE_DEFS, type PipelineNodeKind } from '@/lib/pipeline';
 import { PARAM_SCHEMAS, paramValue } from '@/lib/nodeParams';
 import { ANALYSIS_MODELS, estimateAnalysisCost, getAnalysisModel, DEFAULT_ANALYSIS_MODEL } from '@/lib/analysisModels';
 import { iconFor } from '@/components/studio/icons';
+import { ManualCutModal } from '@/components/studio/ManualCutModal';
 import { uploadAsset } from '@/lib/uploadAsset';
 import type { StepNodeData } from '@/components/studio/nodes/StepNode';
 
@@ -355,6 +356,7 @@ function AnalyzePanel({
   const [keys, setKeys] = useState<{ fal: boolean; anthropic: boolean }>({ fal: true, anthropic: false });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [cutOpen, setCutOpen] = useState(false);
   const parsed: { segments: AnalyzedSeg[]; summary: string } | null = savedAnalysis
     ? JSON.parse(savedAnalysis)
     : null;
@@ -434,6 +436,14 @@ function AnalyzePanel({
         {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
         {busy ? 'Analyzing…' : parsed ? `Re-analyze (${priceLabel})` : `Analyze ad (${priceLabel})`}
       </button>
+      <button
+        onClick={() => setCutOpen(true)}
+        disabled={busy || !clip}
+        className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] py-1.5 text-[11px] text-white/80 transition-colors hover:border-white/30 hover:text-white disabled:opacity-50"
+      >
+        <Scissors className="h-3.5 w-3.5" />
+        {parsed ? 'Adjust parts manually' : 'Cut parts manually (free)'}
+      </button>
       {err && <div className="mt-1.5 px-0.5 text-[10px] text-rose-400/90">{err}</div>}
       {parsed && (
         <div className="mt-2 space-y-1">
@@ -460,6 +470,24 @@ function AnalyzePanel({
             </div>
           ))}
         </div>
+      )}
+      {cutOpen && (
+        <ManualCutModal
+          src={`/api/serve/${clip}`}
+          title="Reference ad"
+          initialSegments={parsed?.segments}
+          onSave={(segments) => {
+            onSaveAnalysis(segments, parsed?.summary ?? 'Manually segmented');
+            setCutOpen(false);
+            // persist on the reference_ads row too — the combined-clip split reads it from there
+            fetch('/api/reference-ads/analyze', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ videoPath: clip, manualSegments: segments }),
+            }).catch(() => {});
+          }}
+          onClose={() => setCutOpen(false)}
+        />
       )}
     </div>
   );
