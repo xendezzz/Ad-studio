@@ -9,22 +9,22 @@
     --text:#e9ecf3; --muted:#99a1b3; --faint:#6b7286;
     --db:#3ecf8e; --st:#2dd4bf; --fal:#8b8df6; --cla:#d9775f; --el:#22d3ee;
     --hf:#f472b6; --meta:#5b9bf8; --rs:#eab308; --ff:#9aa3b5;
-    --edge-dim:.10; --chipbg:rgba(255,255,255,.05);
+    --edge-dim:.08; --chipbg:rgba(255,255,255,.05);
   }
   @media (prefers-color-scheme: light){
     :root{ --bg:#f4f5f9; --panel:#ffffff; --panel2:#eceef4; --line:#dcdfe9;
       --text:#181c26; --muted:#5b6274; --faint:#8b91a2;
-      --cla:#c05b3f; --rs:#b8860b; --ff:#6e7688; --edge-dim:.15; --chipbg:rgba(20,24,40,.05);}
+      --cla:#c05b3f; --rs:#b8860b; --ff:#6e7688; --edge-dim:.12; --chipbg:rgba(20,24,40,.05);}
   }
   :root[data-theme="dark"]{
     --bg:#0d0f14; --panel:#151922; --panel2:#11141c; --line:#262c38;
     --text:#e9ecf3; --muted:#99a1b3; --faint:#6b7286;
-    --cla:#d9775f; --rs:#eab308; --ff:#9aa3b5; --edge-dim:.10; --chipbg:rgba(255,255,255,.05);
+    --cla:#d9775f; --rs:#eab308; --ff:#9aa3b5; --edge-dim:.08; --chipbg:rgba(255,255,255,.05);
   }
   :root[data-theme="light"]{
     --bg:#f4f5f9; --panel:#ffffff; --panel2:#eceef4; --line:#dcdfe9;
     --text:#181c26; --muted:#5b6274; --faint:#8b91a2;
-    --cla:#c05b3f; --rs:#b8860b; --ff:#6e7688; --edge-dim:.15; --chipbg:rgba(20,24,40,.05);
+    --cla:#c05b3f; --rs:#b8860b; --ff:#6e7688; --edge-dim:.12; --chipbg:rgba(20,24,40,.05);
   }
   html{background:var(--bg)}
   body{
@@ -32,7 +32,7 @@
     font:15px/1.55 "Avenir Next","Segoe UI",system-ui,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1120px;margin:0 auto;padding:40px 28px 80px}
+  .wrap{max-width:1160px;margin:0 auto;padding:40px 28px 80px}
   header{margin-bottom:26px}
   .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);font-weight:600}
   h1{font-size:30px;font-weight:600;margin:6px 0 8px;text-wrap:balance;letter-spacing:-.01em}
@@ -50,17 +50,19 @@
          padding:10px 6px;overflow-x:auto}
   .board svg{display:block;margin:0 auto}
   .colhead{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;fill:var(--faint);font-weight:600}
+  .grouplabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;fill:var(--muted);font-weight:700}
   .nodebox{fill:var(--panel);stroke:var(--line)}
-  .nodelabel{fill:var(--text);font-size:13px;font-weight:600}
-  .nodesub{fill:var(--faint);font-size:10.5px}
+  .rtpath{fill:var(--text);font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:11.5px}
+  .rtmethod{fill:var(--faint);font-size:9px;font-weight:700;letter-spacing:.06em;
+            font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
   .svclabel{fill:var(--text);font-size:13px;font-weight:600}
   .svcsub{fill:var(--faint);font-size:10.5px}
-  .edge{fill:none;stroke-width:1.5;opacity:.45;transition:opacity .15s}
-  .edge.client{stroke-width:1;opacity:.22}
+  .edge{fill:none;stroke-width:1.3;opacity:.4;transition:opacity .15s}
   svg.focus .edge{opacity:var(--edge-dim)}
   svg.focus .edge.hot{opacity:.95;stroke-width:2}
-  svg.focus .nd{opacity:.35}
+  svg.focus .nd{opacity:.3}
   svg.focus .nd.hot{opacity:1}
+  svg.focus .grouplabel{opacity:.4}
   .nd{cursor:default;transition:opacity .15s}
   .hint{color:var(--faint);font-size:12px;margin:10px 4px 0}
 
@@ -88,16 +90,16 @@
   <div class="eyebrow">Ad-Studio · System Map</div>
   <h1>Every API in the pipeline</h1>
   <p class="sub">The browser talks only to Next.js route handlers under <code>/api/*</code> (gated by session middleware).
-  Those routes fan out to two Supabase surfaces, four AI providers, an email sender, a headless-Chrome scraper —
-  and local ffmpeg for all media work. Hover a row to trace its connections.</p>
+  All 37 routes are drawn individually below, grouped by domain, with an edge to every service they reach —
+  two Supabase surfaces, four AI providers, an email sender, a headless-Chrome scraper, and local ffmpeg.</p>
 </header>
 
 <div class="legend" id="legend"></div>
-<div class="board"><svg id="map" role="img" aria-label="Flow diagram: browser to API route groups to external services"></svg></div>
-<p class="hint">Hover an API group or a service to isolate its edges. Edge color = the service it reaches.</p>
+<div class="board"><svg id="map" role="img" aria-label="Flow diagram: each API route connected to the external services it calls"></svg></div>
+<p class="hint">Hover a route or a service to isolate its edges. Edge color = the service it reaches.</p>
 
 <h2>Endpoint catalog</h2>
-<p class="h2sub">All 37 route handlers, grouped by domain. Dots mark the services each endpoint touches.</p>
+<p class="h2sub">Same 37 routes with a one-line description per domain. Dots mark the services each endpoint touches.</p>
 <div class="grid" id="cards"></div>
 
 <footer>Generated from the Ad-Studio codebase — route handlers in <span class="mono">app/api/</span>, service clients in <span class="mono">lib/</span>. See <span class="mono">ARCHITECTURE.md</span> for the full write-up.</footer>
@@ -117,18 +119,18 @@ const SERVICES = [
 ];
 
 const GROUPS = [
-  {id:'auth', label:'Auth', sub:'OTP login', desc:'Signed-cookie OTP flow; middleware gates everything else.',
+  {id:'auth', label:'Auth', desc:'Signed-cookie OTP flow; middleware gates everything else.',
    routes:[
      {m:'POST',p:'/api/auth/send-code',s:['rs']},
      {m:'POST',p:'/api/auth/verify',s:[]},
      {m:'POST',p:'/api/auth/logout',s:[]},
    ]},
-  {id:'projects', label:'Projects', sub:'server store', desc:'Server-side project rows (canvas itself is localStorage-first).',
+  {id:'projects', label:'Projects', desc:'Server-side project rows (canvas itself is localStorage-first).',
    routes:[
      {m:'GET·POST',p:'/api/projects',s:['db']},
      {m:'GET·PATCH·DEL',p:'/api/projects/[id]',s:['db']},
    ]},
-  {id:'lib', label:'Model & asset libraries', sub:'personas · hooks · demos · music', desc:'CRUD for the shared libraries; persona generation via image models.',
+  {id:'lib', label:'Model & asset libraries', desc:'CRUD for the shared libraries; persona generation via image models.',
    routes:[
      {m:'GET·POST',p:'/api/models',s:['db']},
      {m:'PATCH·DEL',p:'/api/models/[id]',s:['db']},
@@ -137,18 +139,18 @@ const GROUPS = [
      {m:'GET·POST',p:'/api/app-demos',s:['db']},
      {m:'GET·POST',p:'/api/music',s:['db']},
    ]},
-  {id:'ref', label:'Reference ads', sub:'ingest · analyze', desc:'Probe, transcribe and LLM-segment ads into hook / PiP / a-roll / b-roll / CTA.',
+  {id:'ref', label:'Reference ads', desc:'Probe, transcribe and LLM-segment ads into hook / PiP / a-roll / b-roll / CTA.',
    routes:[
      {m:'GET·POST',p:'/api/reference-ads',s:['db']},
      {m:'POST',p:'/api/reference-ads/ingest',s:['ff','fal','db']},
      {m:'POST',p:'/api/reference-ads/analyze',s:['cla','fal','ff','db']},
    ]},
-  {id:'run', label:'Pipeline run', sub:'graph executor', desc:'Fire-and-forget run of the node graph; client polls per-node job status.',
+  {id:'run', label:'Pipeline run', desc:'Fire-and-forget run of the node graph; client polls per-node job status.',
    routes:[
      {m:'POST',p:'/api/run',s:['db','ff','st','fal','el']},
      {m:'GET',p:'/api/run/[id]',s:['db','st']},
    ]},
-  {id:'mc', label:'Motion control', sub:'persona swap', desc:'First-frame face swap, crop detection, Kling video swap, PiP rebuild.',
+  {id:'mc', label:'Motion control', desc:'First-frame face swap, crop detection, Kling video swap, PiP rebuild.',
    routes:[
      {m:'POST',p:'/api/motion-control',s:['fal','ff','st']},
      {m:'POST',p:'/api/motion-control/first-frame',s:['fal','cla','st']},
@@ -158,19 +160,19 @@ const GROUPS = [
      {m:'POST',p:'/api/motion-control/pip-face',s:['fal','ff','st']},
      {m:'POST',p:'/api/pip/replace-appdemo',s:['fal','ff','st']},
    ]},
-  {id:'clip', label:'Clip editing', sub:'trim · split · name', desc:'ffmpeg cuts plus transcript-aligned splitting of combined creator clips.',
+  {id:'clip', label:'Clip editing', desc:'ffmpeg cuts plus transcript-aligned splitting of combined creator clips.',
    routes:[
      {m:'POST',p:'/api/clip/trim',s:['ff','st']},
      {m:'POST',p:'/api/combined-clip/split',s:['fal','cla','ff','st']},
      {m:'POST',p:'/api/clip-name',s:['cla','fal']},
    ]},
-  {id:'post', label:'Overlays & post', sub:'text · assets · subtitles', desc:'sharp-rendered text PNGs, timed asset overlays, Whisper captions — burned by ffmpeg.',
+  {id:'post', label:'Overlays & post', desc:'sharp-rendered text PNGs, timed asset overlays, Whisper captions — burned by ffmpeg.',
    routes:[
      {m:'POST',p:'/api/text',s:['ff','st']},
      {m:'POST',p:'/api/asset',s:['ff','st']},
      {m:'POST',p:'/api/subtitles',s:['fal','ff','st']},
    ]},
-  {id:'voice', label:'Voice', sub:'design · re-voice', desc:'Demucs stem split, ElevenLabs speech-to-speech on the vocals only.',
+  {id:'voice', label:'Voice', desc:'Demucs stem split, ElevenLabs speech-to-speech on the vocals only.',
    routes:[
      {m:'POST',p:'/api/voice',s:['el','fal','ff','st']},
      {m:'POST',p:'/api/voice/design',s:['el']},
@@ -178,7 +180,7 @@ const GROUPS = [
      {m:'POST',p:'/api/voice/transcribe',s:['fal']},
      {m:'GET',p:'/api/voice/voices',s:['el']},
    ]},
-  {id:'media', label:'Media & storage', sub:'upload · serve · fetch', desc:'Presigned uploads, signed-URL serving, WebP thumbs, Meta ad scraping.',
+  {id:'media', label:'Media & storage', desc:'Presigned uploads, signed-URL serving, WebP thumbs, Meta ad scraping.',
    routes:[
      {m:'POST',p:'/api/upload',s:['st']},
      {m:'POST',p:'/api/upload-url',s:['st']},
@@ -203,104 +205,117 @@ for (const s of SERVICES){
 /* ---------- diagram ---------- */
 const NS = 'http://www.w3.org/2000/svg';
 const svg = document.getElementById('map');
-const W = 1040, PADT = 46;
-const GX = 300, GW = 250;            // group column
-const SX = 780, SW = 232;            // service column
-const GH = 46, GGAP = 14;
-const SH = 50, SGAP = 13;
-const nGroups = GROUPS.length, nSvc = SERVICES.length;
-const groupsH = nGroups*GH + (nGroups-1)*GGAP;
-const svcH = nSvc*SH + (nSvc-1)*SGAP;
-const H = PADT + Math.max(groupsH, svcH) + 24;
+const W = 1100, PADT = 52, PADB = 20;
+const RX = 40, RW = 380, RH = 27, RGAP = 7;   // route nodes
+const GLABEL = 24, GGAP = 26;                 // group label + gap between groups
+const SX = 800, SW = 268, SH = 56;            // service nodes
+
+/* vertical layout of routes */
+let cursor = PADT;
+const routePos = [];   // {route, groupId, y}
+for (const g of GROUPS){
+  cursor += GLABEL;
+  g.labelY = cursor - 8;
+  g.routes.forEach((r)=>{
+    routePos.push({r, gid:g.id, y:cursor});
+    cursor += RH + RGAP;
+  });
+  cursor += GGAP - RGAP;
+}
+const H = cursor + PADB;
 svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 svg.setAttribute('width', W); svg.setAttribute('height', H);
-svg.style.minWidth = '900px';
+svg.style.minWidth = '1000px';
 
 function el(tag, attrs, parent){
   const e = document.createElementNS(NS, tag);
   for (const k in attrs) e.setAttribute(k, attrs[k]);
   (parent||svg).appendChild(e); return e;
 }
-function txt(x,y,cls,content,anchor){
-  const t = el('text',{x,y,'class':cls,'text-anchor':anchor||'start'});
+function txt(x,y,cls,content,anchor,parent){
+  const t = el('text',{x,y,'class':cls,'text-anchor':anchor||'start'},parent);
   t.textContent = content; return t;
 }
 
-const gTop = PADT + (Math.max(groupsH,svcH)-groupsH)/2;
-const sTop = PADT + (Math.max(groupsH,svcH)-svcH)/2;
-const gY = i => gTop + i*(GH+GGAP);
-const sY = i => sTop + i*(SH+SGAP);
+txt(RX+RW/2, PADT-24, 'colhead', 'NEXT.JS API ROUTES — 37 HANDLERS', 'middle');
+txt(SX+SW/2, PADT-24, 'colhead', 'SERVICES', 'middle');
 
-txt(GX+GW/2, PADT-20, 'colhead', 'NEXT.JS API ROUTES', 'middle');
-txt(SX+SW/2, PADT-20, 'colhead', 'SERVICES', 'middle');
-txt(70, PADT-20, 'colhead', 'CLIENT', 'middle');
+/* services spread over the full height */
+const sSpan = H - PADT - PADB - SH;
+const sY = i => PADT + (SERVICES.length===1 ? 0 : i*sSpan/(SERVICES.length-1));
+const sCenter = i => sY(i) + SH/2;
 
-/* client node */
-const midY = PADT + Math.max(groupsH,svcH)/2;
-const cliG = el('g',{'class':'nd', id:'nd-client'});
-el('rect',{x:12,y:midY-34,width:118,height:68,rx:10,'class':'nodebox'},cliG);
-txt(71,midY-8,'nodelabel','Browser','middle').setAttribute('parent','');
-cliG.appendChild(svg.lastChild);
-const t2 = txt(71,midY+10,'nodesub','StudioCanvas ·','middle'); cliG.appendChild(t2);
-const t3 = txt(71,midY+24,'nodesub','library pages','middle'); cliG.appendChild(t3);
-
-/* edges layer first (under nodes) */
+/* edges layer under nodes */
 const edgeLayer = el('g',{});
 
-/* group nodes + client edges */
-GROUPS.forEach((g,i)=>{
-  const y = gY(i);
-  // client edge
-  el('path',{d:`M 130 ${midY} C 210 ${midY}, 220 ${y+GH/2}, ${GX} ${y+GH/2}`,
-    'class':'edge client','stroke':'var(--faint)','data-g':g.id},edgeLayer);
-  const nd = el('g',{'class':'nd','data-g':g.id});
-  el('rect',{x:GX,y,width:GW,height:GH,rx:9,'class':'nodebox'},nd);
-  const l = txt(GX+14,y+19,'nodelabel',g.label); nd.appendChild(l);
-  const s = txt(GX+14,y+35,'nodesub',g.sub + ' · ' + g.routes.length + (g.routes.length>1?' routes':' route')); nd.appendChild(s);
-  nd.addEventListener('mouseenter',()=>focusGroup(g.id));
+/* group labels + route nodes */
+let rid = 0;
+for (const g of GROUPS){
+  txt(RX, g.labelY, 'grouplabel', g.label.toUpperCase());
+}
+const inCount = {};   // per-service incoming edge counter, for fan-in offsets
+SERVICES.forEach(s=>inCount[s.id]=0);
+const totalIn = {};
+routePos.forEach(({r})=>r.s.forEach(sid=>totalIn[sid]=(totalIn[sid]||0)+1));
+
+routePos.forEach(({r, gid, y})=>{
+  const id = 'r'+(rid++);
+  // edges
+  r.s.forEach((sid,k)=>{
+    const j = SERVICES.findIndex(s=>s.id===sid);
+    const y1 = y + RH/2 - (r.s.length-1)*3/2 + k*3;
+    const n = totalIn[sid], idx = inCount[sid]++;
+    const spread = Math.min(SH-16, n*3);
+    const y2 = sCenter(j) - spread/2 + (n>1 ? idx*spread/(n-1) : 0);
+    const mx = (RX+RW+SX)/2;
+    el('path',{d:`M ${RX+RW} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${SX} ${y2}`,
+      'class':'edge','stroke':svcById[sid].color,'data-r':id,'data-s':sid},edgeLayer);
+  });
+  // node
+  const nd = el('g',{'class':'nd','data-r':id});
+  el('rect',{x:RX,y,width:RW,height:RH,rx:7,'class':'nodebox'},nd);
+  txt(RX+12, y+18, 'rtpath', r.p, 'start', nd);
+  txt(RX+RW-10, y+17.5, 'rtmethod', r.m, 'end', nd);
+  nd.addEventListener('mouseenter',()=>focusRoute(id));
   nd.addEventListener('mouseleave',unfocus);
 });
 
 /* service nodes */
 SERVICES.forEach((s,i)=>{
   const y = sY(i);
-  const nd = el('g',{'class':'nd','data-s':s.id});
+  const nd = el('g',{'class':'nd','data-svc':s.id});
   el('rect',{x:SX,y,width:SW,height:SH,rx:9,'class':'nodebox'},nd);
-  el('rect',{x:SX,y:y,width:4,height:SH,rx:2,fill:s.color},nd);
-  const l = txt(SX+16,y+20,'svclabel',s.name); nd.appendChild(l);
-  const sub = txt(SX+16,y+36,'svcsub',s.sub); nd.appendChild(sub);
+  el('rect',{x:SX,y,width:4,height:SH,rx:2,fill:s.color},nd);
+  txt(SX+16, y+22, 'svclabel', s.name, 'start', nd);
+  txt(SX+16, y+39, 'svcsub', s.sub, 'start', nd);
+  const n = totalIn[s.id]||0;
+  txt(SX+SW-12, y+22, 'svcsub', n + (n===1?' route':' routes'), 'end', nd);
   nd.addEventListener('mouseenter',()=>focusSvc(s.id));
   nd.addEventListener('mouseleave',unfocus);
 });
 
-/* group→service edges (deduped per group) */
-GROUPS.forEach((g,i)=>{
-  const set = [...new Set(g.routes.flatMap(r=>r.s))];
-  const y1c = gY(i)+GH/2;
-  set.forEach((sid,k)=>{
-    const j = SERVICES.findIndex(s=>s.id===sid);
-    const y1 = y1c - (set.length-1)*4/2 + k*4;
-    const y2 = sY(j)+SH/2;
-    const mx = (GX+GW+SX)/2;
-    el('path',{d:`M ${GX+GW} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${SX} ${y2}`,
-      'class':'edge','stroke':svcById[sid].color,'data-g':g.id,'data-s':sid},edgeLayer);
-  });
-});
-
-function focusGroup(gid){
+function focusRoute(id){
   svg.classList.add('focus');
-  svg.querySelectorAll('.edge').forEach(e=>e.classList.toggle('hot', e.dataset.g===gid));
-  const svcs = new Set([...svg.querySelectorAll(`.edge[data-g="${gid}"]`)].map(e=>e.dataset.s));
+  const svcs = new Set();
+  svg.querySelectorAll('.edge').forEach(e=>{
+    const hot = e.dataset.r===id;
+    e.classList.toggle('hot', hot);
+    if (hot) svcs.add(e.dataset.s);
+  });
   svg.querySelectorAll('.nd').forEach(n=>{
-    n.classList.toggle('hot', n.dataset.g===gid || svcs.has(n.dataset.s) || n.id==='nd-client');
+    n.classList.toggle('hot', n.dataset.r===id || svcs.has(n.dataset.svc));
   });
 }
 function focusSvc(sid){
   svg.classList.add('focus');
-  svg.querySelectorAll('.edge').forEach(e=>e.classList.toggle('hot', e.dataset.s===sid));
-  const gs = new Set([...svg.querySelectorAll(`.edge[data-s="${sid}"]`)].map(e=>e.dataset.g));
+  const routes = new Set();
+  svg.querySelectorAll('.edge').forEach(e=>{
+    const hot = e.dataset.s===sid;
+    e.classList.toggle('hot', hot);
+    if (hot) routes.add(e.dataset.r);
+  });
   svg.querySelectorAll('.nd').forEach(n=>{
-    n.classList.toggle('hot', n.dataset.s===sid || gs.has(n.dataset.g));
+    n.classList.toggle('hot', n.dataset.svc===sid || routes.has(n.dataset.r));
   });
 }
 function unfocus(){
