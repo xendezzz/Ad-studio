@@ -7,6 +7,7 @@ export const NAV_TABS = [
   { href: '/', label: 'Projects' },
   { href: '/models', label: 'Models' },
   { href: '/clips', label: 'Clips' },
+  { href: '/script', label: 'Script' },
 ] as const;
 
 export function StudioNav() {
