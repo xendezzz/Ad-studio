@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import "@xyflow/react/dist/style.css";
+import { AppShell } from "@/components/AppShell";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -36,8 +37,8 @@ export default function RootLayout({
       lang="en"
       className={`dark ${inter.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0c0d11] text-zinc-200">
-        {children}
+      <body className="min-h-full flex flex-col bg-[var(--rn-page)] text-[var(--rn-text)]">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

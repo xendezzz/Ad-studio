@@ -157,7 +157,7 @@ function GenerateModal({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 backdrop-blur-sm">
-      <div className="w-[460px] overflow-hidden rounded-2xl border border-white/10 bg-[#15171c]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+      <div className="w-[460px] overflow-hidden rounded-2xl border border-white/10 bg-[#191919]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl">
         <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
           <Sparkles className="h-4 w-4 text-violet-400" />
           <span className="flex-1 text-[14px] font-semibold text-white/90">
@@ -265,8 +265,8 @@ function GenerateModal({
                     onChange={(e) => { if (e.target.value === '__new') { setNewCat(' '); } else setGroup(e.target.value); }}
                     className="w-full appearance-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-[12.5px] text-white/85 outline-none focus:border-white/30"
                   >
-                    {categories.map((g) => (<option key={g} value={g} className="bg-[#15171c]">{g}</option>))}
-                    <option value="__new" className="bg-[#15171c]">+ New category…</option>
+                    {categories.map((g) => (<option key={g} value={g} className="bg-[#191919]">{g}</option>))}
+                    <option value="__new" className="bg-[#191919]">+ New category…</option>
                   </select>
                   {newCat !== '' && (
                     <input
@@ -311,7 +311,7 @@ function GenerateModal({
                   className="w-full appearance-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-[12.5px] text-white/85 outline-none focus:border-white/30"
                 >
                   {IMAGE_MODELS.map((m) => (
-                    <option key={m.id} value={m.id} className="bg-[#15171c]">{m.label} — {m.provider}</option>
+                    <option key={m.id} value={m.id} className="bg-[#191919]">{m.label} — {m.provider}</option>
                   ))}
                 </select>
                 {keys && !keyOk && (
@@ -351,8 +351,8 @@ function GenerateModal({
                     onChange={(e) => { if (e.target.value === '__new') { setNewCat(' '); } else setGroup(e.target.value); }}
                     className="w-full appearance-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-[12.5px] text-white/85 outline-none focus:border-white/30"
                   >
-                    {categories.map((g) => (<option key={g} value={g} className="bg-[#15171c]">{g}</option>))}
-                    <option value="__new" className="bg-[#15171c]">+ New category…</option>
+                    {categories.map((g) => (<option key={g} value={g} className="bg-[#191919]">{g}</option>))}
+                    <option value="__new" className="bg-[#191919]">+ New category…</option>
                   </select>
                   {newCat !== '' && (
                     <input
@@ -519,7 +519,7 @@ export function ModelsPage() {
   return (
     <main
       className="min-h-screen w-full text-zinc-200"
-      style={{ background: 'radial-gradient(130% 80% at 50% -10%, #1a1d24 0%, #0c0d11 55%, #08090c 100%)' }}
+      style={{ background: 'radial-gradient(130% 80% at 50% -10%, #1f1f1f 0%, #141414 55%, #101010 100%)' }}
     >
       <header className="flex items-center justify-between px-8 py-5">
         <div className="flex items-center gap-5">
@@ -549,7 +549,7 @@ export function ModelsPage() {
               />
             </div>
             {searchOpen && (
-              <div className="absolute right-0 top-full z-40 mt-1.5 max-h-72 w-56 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1c22]/95 p-1 shadow-[0_16px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+              <div className="absolute right-0 top-full z-40 mt-1.5 max-h-72 w-56 overflow-y-auto rounded-xl border border-white/10 bg-[#1e1e1e]/95 p-1 shadow-[0_16px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl">
                 <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-white/35">Search in</div>
                 <button onClick={() => { setSearchCat(null); setSearchOpen(false); }} className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12px] hover:bg-white/10 ${!searchCat ? 'text-white/90' : 'text-white/65'}`}>
                   All categories <span className="text-white/30">{models.length}</span>
@@ -631,7 +631,7 @@ export function ModelsPage() {
                   </div>
                   <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8">
                     {rows.map((m) => (
-                      <div key={m.id} className="group relative overflow-hidden rounded-xl border border-white/8 bg-[#15171c]/70 transition-all hover:border-white/25">
+                      <div key={m.id} className="group relative overflow-hidden rounded-xl border border-white/8 bg-[#191919]/70 transition-all hover:border-white/25">
                         {m.imagePath ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={`/api/serve/${m.imagePath}`} alt={m.name} className="aspect-[3/4] w-full object-cover" />
@@ -645,7 +645,7 @@ export function ModelsPage() {
                           <MoreHorizontal className="h-3.5 w-3.5" />
                         </button>
                         {menuFor === m.id && (
-                          <div className="absolute right-1.5 top-9 z-20 w-32 rounded-lg border border-white/10 bg-[#1a1c22]/95 p-1 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+                          <div className="absolute right-1.5 top-9 z-20 w-32 rounded-lg border border-white/10 bg-[#1e1e1e]/95 p-1 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl">
                             <button onClick={() => startRename(m)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[11.5px] text-white/80 hover:bg-white/10"><Pencil className="h-3 w-3" /> Rename</button>
                             <button onClick={() => duplicate(m)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[11.5px] text-white/80 hover:bg-white/10"><Copy className="h-3 w-3" /> Duplicate</button>
                             <div className="my-0.5 h-px bg-white/8" />

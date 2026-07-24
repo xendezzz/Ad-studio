@@ -106,7 +106,7 @@ function LibrariesPanel({ onAdd, onClose }: { onAdd: AddFn; onClose: () => void 
   );
 
   return (
-    <div className="studio-node pointer-events-auto flex max-h-[78vh] w-72 flex-col rounded-2xl border border-white/10 bg-[#15171c]/90 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+    <div className="studio-node pointer-events-auto flex max-h-[78vh] w-72 flex-col rounded-2xl border border-white/10 bg-[#191919]/90 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
       <div className="mb-2 flex items-center justify-between px-1">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-white/40">Libraries</span>
         <button onClick={onClose} className="text-white/30 hover:text-white/70"><X className="h-3.5 w-3.5" /></button>
@@ -227,7 +227,7 @@ export function LeftToolbar({ onAddNode }: { onAddNode: AddFn }) {
 
   return (
     <div className="pointer-events-none absolute left-4 top-16 z-20 flex items-start gap-3">
-      <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-[#15171c]/70 p-2 shadow-[0_8px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+      <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-[#191919]/70 p-2 shadow-[0_8px_30px_rgba(0,0,0,0.45)] backdrop-blur-xl">
         <button
           onClick={() => toggle('add')}
           title="Add node"
@@ -242,7 +242,7 @@ export function LeftToolbar({ onAddNode }: { onAddNode: AddFn }) {
       </div>
 
       {panel === 'add' && (
-        <div className="studio-node pointer-events-auto w-64 rounded-2xl border border-white/10 bg-[#15171c]/85 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+        <div className="studio-node pointer-events-auto w-64 rounded-2xl border border-white/10 bg-[#191919]/85 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
           <div className="mb-2 flex items-center justify-between px-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-white/40">Add node</span>
             <button onClick={() => setPanel(null)} className="text-white/30 hover:text-white/70"><X className="h-3.5 w-3.5" /></button>

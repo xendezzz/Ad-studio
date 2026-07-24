@@ -24,7 +24,7 @@ export function FrameNode({ data }: NodeProps) {
     >
       <div
         className="absolute -top-3.5 left-5 flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold"
-        style={{ borderColor: `${accent}55`, background: '#15171c', color: `${accent}` }}
+        style={{ borderColor: `${accent}55`, background: '#191919', color: `${accent}` }}
       >
         {d.locked && <Lock className="h-3 w-3" />}
         {d.label}

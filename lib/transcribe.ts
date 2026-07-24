@@ -20,14 +20,19 @@ function ensureFal() {
   }
 }
 
-const MISHEARD = /\b(man[ui]s|menace|manage|runeable|run able)\b/gi;
+const MISHEARD = /\b(man[ui]s|menace|manage|runeable|runnable|run able)\b/gi;
 function fixBrand(text: string): string {
   return text.replace(MISHEARD, 'Runable');
 }
 
 export async function transcribeWords(videoStoragePath: string): Promise<WordChunk[]> {
-  ensureFal();
   const audioUrl = await getSignedUrl(videoStoragePath, 3600);
+  return transcribeWordsFromUrl(audioUrl);
+}
+
+/** Same as transcribeWords but for an already-reachable media URL (e.g. a local file uploaded to FAL storage). */
+export async function transcribeWordsFromUrl(audioUrl: string): Promise<WordChunk[]> {
+  ensureFal();
   const result = await fal.subscribe('fal-ai/whisper', {
     input: { audio_url: audioUrl, task: 'transcribe', chunk_level: 'word' },
     logs: false,

@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     "ffmpeg-static",
     "@ffprobe-installer/ffprobe",
     "postgres",
+    "@remotion/bundler",
+    "@remotion/renderer",
+    "esbuild",
   ],
   // Ensure the bundled fonts ship with server functions (ffmpegTextOverlay needs them;
   // without fontconfig on serverless, Pango hangs if the TTF isn't present).

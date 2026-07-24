@@ -101,6 +101,27 @@ export async function speechToSpeech(opts: {
   return Buffer.from(await res.arrayBuffer());
 }
 
+/**
+ * Generate a short sound effect from a text description (Sound Generation API).
+ * Returns an MP3 audio Buffer.
+ */
+export async function generateSoundEffect(opts: {
+  text: string;
+  durationSeconds?: number;
+  promptInfluence?: number;
+}): Promise<Buffer> {
+  const res = await elevenFetch('/sound-generation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: opts.text,
+      duration_seconds: opts.durationSeconds ?? 1,
+      prompt_influence: opts.promptInfluence ?? 0.4,
+    }),
+  });
+  return Buffer.from(await res.arrayBuffer());
+}
+
 export type VoicePreview = {
   audioBase64: string;       // base64-encoded MP3 preview
   generatedVoiceId: string;  // pass to saveDesignedVoice() to keep it

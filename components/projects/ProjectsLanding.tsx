@@ -72,7 +72,7 @@ export function ProjectsLanding() {
   return (
     <main
       className="min-h-screen w-full text-zinc-200"
-      style={{ background: 'radial-gradient(130% 80% at 50% -10%, #1a1d24 0%, #0c0d11 55%, #08090c 100%)' }}
+      style={{ background: 'radial-gradient(130% 80% at 50% -10%, #1f1f1f 0%, #141414 55%, #101010 100%)' }}
     >
       {/* header */}
       <header className="flex items-center justify-between px-8 py-5">
@@ -128,7 +128,7 @@ export function ProjectsLanding() {
                 <div
                   key={p.id}
                   onClick={() => router.push(`/project/${p.id}`)}
-                  className={`group relative flex aspect-[3/4] cursor-pointer flex-col overflow-hidden rounded-xl border border-white/8 bg-[#15171c]/80 shadow-[0_8px_24px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20 ${menuFor === p.id ? 'z-30' : ''}`}
+                  className={`group relative flex aspect-[3/4] cursor-pointer flex-col overflow-hidden rounded-xl border border-white/8 bg-[#191919]/80 shadow-[0_8px_24px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20 ${menuFor === p.id ? 'z-30' : ''}`}
                 >
                   {/* preview */}
                   <div className="relative flex-1 overflow-hidden bg-black/40">
@@ -170,7 +170,7 @@ export function ProjectsLanding() {
                     {menuFor === p.id && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute right-1.5 top-9 z-20 w-32 rounded-xl border border-white/10 bg-[#1a1c22]/95 p-1 shadow-[0_12px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+                        className="absolute right-1.5 top-9 z-20 w-32 rounded-xl border border-white/10 bg-[#1e1e1e]/95 p-1 shadow-[0_12px_40px_rgba(0,0,0,0.55)] backdrop-blur-xl"
                       >
                         <button onClick={(e) => startRename(p, e)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[11.5px] text-white/80 hover:bg-white/10">
                           <Pencil className="h-3 w-3" /> Rename

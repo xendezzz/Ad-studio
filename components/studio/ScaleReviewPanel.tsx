@@ -50,7 +50,7 @@ export function ScaleReviewPanel({
 
   return (
     <div className="pointer-events-auto absolute inset-0 z-40 grid place-items-center bg-black/50 backdrop-blur-sm" onMouseDown={() => phase !== 'videos' && onClose()}>
-      <div className="flex max-h-[86vh] w-[760px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#15171c]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[86vh] w-[760px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#191919]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
           {phase === 'done' ? <Check className="h-4 w-4 text-emerald-400" /> : <Sparkles className="h-4 w-4 text-violet-400" />}
           <span className="flex-1 text-[14px] font-semibold text-white/90">

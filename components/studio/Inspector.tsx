@@ -62,12 +62,12 @@ function VoiceLibrarySelect({
           }}
           className="w-full appearance-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 pr-7 text-[12px] text-white/85 outline-none transition-colors hover:border-white/20 focus:border-white/30"
         >
-          <option value="" className="bg-[#15171c]">Pick a voice…</option>
+          <option value="" className="bg-[#191919]">Pick a voice…</option>
           {value && !shown.some((v) => v.voiceId === value) && (
-            <option value={value} className="bg-[#15171c]">{(voices ?? []).find((v) => v.voiceId === value)?.name ?? 'Current voice'}</option>
+            <option value={value} className="bg-[#191919]">{(voices ?? []).find((v) => v.voiceId === value)?.name ?? 'Current voice'}</option>
           )}
           {shown.map((v) => (
-            <option key={v.voiceId} value={v.voiceId} className="bg-[#15171c]">{v.name}</option>
+            <option key={v.voiceId} value={v.voiceId} className="bg-[#191919]">{v.name}</option>
           ))}
         </select>
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/35" />
@@ -415,7 +415,7 @@ function AnalyzePanel({
           className="w-full appearance-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 pr-7 text-[11px] text-white/85 outline-none transition-colors hover:border-white/20 focus:border-white/30"
         >
           {ANALYSIS_MODELS.map((m) => (
-            <option key={m.id} value={m.id} className="bg-[#15171c] text-white">{m.label}</option>
+            <option key={m.id} value={m.id} className="bg-[#191919] text-white">{m.label}</option>
           ))}
         </select>
         <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/35" />
@@ -533,7 +533,7 @@ export function Inspector({
 
   return (
     <div
-      className="studio-node pointer-events-auto absolute z-30 rounded-2xl border border-white/10 bg-[#15171c]/90 shadow-[0_16px_50px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+      className="studio-node pointer-events-auto absolute z-30 rounded-2xl border border-white/10 bg-[#191919]/90 shadow-[0_16px_50px_rgba(0,0,0,0.55)] backdrop-blur-xl"
       style={{ left, top, width: PANEL_WIDTH }}
     >
       {/* header */}
@@ -596,7 +596,7 @@ export function Inspector({
                     className="w-full appearance-none rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 pr-7 text-[12px] text-white/85 outline-none transition-colors hover:border-white/20 focus:border-white/30"
                   >
                     {f.options?.map((o) => (
-                      <option key={o} value={o} className="bg-[#15171c] text-white">
+                      <option key={o} value={o} className="bg-[#191919] text-white">
                         {o}
                       </option>
                     ))}

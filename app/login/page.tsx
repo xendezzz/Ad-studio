@@ -51,7 +51,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main onMouseMove={onMove} className="relative grid min-h-screen w-full place-items-center overflow-hidden bg-[#08090c] px-4 text-zinc-200">
+    <main onMouseMove={onMove} className="relative grid min-h-screen w-full place-items-center overflow-hidden bg-[#101010] px-4 text-zinc-200">
       {/* aurora light-leak background (animated + grain) */}
       <AuroraBg />
 
@@ -80,7 +80,7 @@ export default function LoginPage() {
       />
 
       {/* glass modal */}
-      <div className="relative z-30 w-full max-w-[380px] -translate-y-16 rounded-2xl border border-white/15 bg-[#0c0d11]/55 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
+      <div className="relative z-30 w-full max-w-[380px] -translate-y-16 rounded-2xl border border-white/15 bg-[#141414]/55 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
         {step === 'email' ? (
           <form onSubmit={sendCode}>
             <h1 className="text-[30px] leading-tight text-white">Sign in</h1>

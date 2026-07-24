@@ -22,7 +22,7 @@ export function OutputPanel({
   const title = running ? 'Rendering…' : error ? 'Run failed' : 'Ad ready';
 
   return (
-    <div className="studio-node pointer-events-auto absolute bottom-4 right-4 z-30 w-64 overflow-hidden rounded-2xl border border-white/10 bg-[#15171c]/90 shadow-[0_16px_50px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+    <div className="studio-node pointer-events-auto absolute bottom-4 right-4 z-30 w-64 overflow-hidden rounded-2xl border border-white/10 bg-[#191919]/90 shadow-[0_16px_50px_rgba(0,0,0,0.55)] backdrop-blur-xl">
       <div className="flex items-center gap-2 border-b border-white/8 px-3 py-2.5">
         {running ? (
           <Loader2 className="h-4 w-4 animate-spin text-amber-400" />

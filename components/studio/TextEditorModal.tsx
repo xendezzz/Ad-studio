@@ -139,7 +139,7 @@ export function TextEditorModal({
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 backdrop-blur-sm" onMouseDown={() => !busy && onClose()}>
-      <div className="studio-node flex w-[920px] max-w-[95vw] flex-col gap-3 rounded-2xl border border-white/10 bg-[#15171c]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="studio-node flex w-[920px] max-w-[95vw] flex-col gap-3 rounded-2xl border border-white/10 bg-[#191919]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2"><Type className="h-4 w-4 text-white/70" /><span className="text-[13px] font-semibold text-white/90">Text & emojis</span></div>
           <button onClick={onClose} disabled={busy} className="text-white/40 hover:text-white/80 disabled:opacity-40"><X className="h-4 w-4" /></button>
@@ -193,7 +193,7 @@ export function TextEditorModal({
                     <input value={sel.text} onChange={(e) => patch(sel.id, { text: e.target.value })} placeholder="Your text…" className="w-full rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] text-white/85 outline-none focus:border-white/30" />
                     <div className="flex items-center gap-2">
                       <select value={sel.font} onChange={(e) => patch(sel.id, { font: e.target.value })} className="flex-1 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] text-white/85 outline-none">
-                        {FONTS.map((f) => <option key={f} value={f} className="bg-[#15171c]">{f}</option>)}
+                        {FONTS.map((f) => <option key={f} value={f} className="bg-[#191919]">{f}</option>)}
                       </select>
                     </div>
                   </>

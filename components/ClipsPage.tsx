@@ -129,7 +129,7 @@ export function ClipsPage() {
     (server as Record<string, Clip[]>)[kind] ?? (local as Record<string, Clip[]>)[kind] ?? [];
 
   return (
-    <main className="min-h-screen w-full text-zinc-200" style={{ background: 'radial-gradient(130% 80% at 50% -10%, #1a1d24 0%, #0c0d11 55%, #08090c 100%)' }}>
+    <main className="min-h-screen w-full text-zinc-200" style={{ background: 'radial-gradient(130% 80% at 50% -10%, #1f1f1f 0%, #141414 55%, #101010 100%)' }}>
       <input ref={fileRef} type="file" hidden onChange={onFile} />
       <header className="flex items-center justify-between px-8 py-5">
         <div className="flex items-center gap-5">

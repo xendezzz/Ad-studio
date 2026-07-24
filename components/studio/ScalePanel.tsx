@@ -99,7 +99,7 @@ function VoicePickerModal({
 
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center bg-black/60 backdrop-blur-sm" onMouseDown={onClose}>
-      <div className="flex max-h-[78vh] w-[440px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#15171c]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[78vh] w-[440px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#191919]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2.5 border-b border-white/8 px-4 py-3">
           {model.imagePath ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -339,7 +339,7 @@ export function ScalePanel({
 
   return (
     <div className="pointer-events-auto absolute inset-0 z-40 grid place-items-center bg-black/50 backdrop-blur-sm" onMouseDown={onClose}>
-      <div className="flex max-h-[82vh] w-[660px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#15171c]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[82vh] w-[660px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#191919]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
           <Sparkles className="h-4 w-4 text-violet-400" />
           <span className="flex-1 text-[14px] font-semibold text-white/90">Scale across models</span>

@@ -153,7 +153,7 @@ export function TrimSplitModal({
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 backdrop-blur-sm" onMouseDown={() => !busy && onClose()}>
       <div
-        className="studio-node w-[640px] max-w-[92vw] rounded-2xl border border-white/10 bg-[#15171c]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
+        className="studio-node w-[640px] max-w-[92vw] rounded-2xl border border-white/10 bg-[#191919]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* header */}

@@ -92,7 +92,7 @@ export function SubtitlesEditorModal({
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 backdrop-blur-sm" onMouseDown={() => !busy && onClose()}>
-      <div className="studio-node flex w-[760px] max-w-[95vw] gap-4 rounded-2xl border border-white/10 bg-[#15171c]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="studio-node flex w-[760px] max-w-[95vw] gap-4 rounded-2xl border border-white/10 bg-[#191919]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]" onMouseDown={(e) => e.stopPropagation()}>
         {/* preview */}
         <div className="flex flex-col gap-2">
           <div ref={stageRef} className="relative aspect-[9/16] overflow-hidden rounded-xl border border-white/8 bg-black" style={{ width: 'min(38vh, 260px)' }}>
@@ -124,12 +124,12 @@ export function SubtitlesEditorModal({
           <div className="grid grid-cols-2 gap-2">
             <label className="text-[11px] text-white/50">Style
               <select value={cfg.style} onChange={(e) => set({ style: e.target.value })} className="mt-1 w-full rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] text-white/85 outline-none">
-                {STYLES.map((s) => <option key={s} value={s} className="bg-[#15171c]">{s}</option>)}
+                {STYLES.map((s) => <option key={s} value={s} className="bg-[#191919]">{s}</option>)}
               </select>
             </label>
             <label className="text-[11px] text-white/50">Font
               <select value={cfg.font} onChange={(e) => set({ font: e.target.value })} className="mt-1 w-full rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] text-white/85 outline-none">
-                {FONTS.map((f) => <option key={f} value={f} className="bg-[#15171c]">{f}</option>)}
+                {FONTS.map((f) => <option key={f} value={f} className="bg-[#191919]">{f}</option>)}
               </select>
             </label>
           </div>

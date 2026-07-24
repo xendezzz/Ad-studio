@@ -168,7 +168,7 @@ function StepNodeImpl({ id, data, selected }: NodeProps) {
     <div
       className={`studio-node group relative w-[212px] rounded-2xl border backdrop-blur-md transition-all duration-200 ease-out hover:-translate-y-px ${analyzing ? 'studio-analyzing' : ''}`}
       style={{
-        background: 'linear-gradient(180deg, #1b1e25 0%, #131419 100%)',
+        background: 'linear-gradient(180deg, #202020 0%, #171717 100%)',
         borderColor: selected ? hexToRgba(accent, 0.5) : 'rgba(255,255,255,0.07)',
         boxShadow: selected
           ? `inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px ${hexToRgba(accent, 0.3)}, 0 18px 50px rgba(0,0,0,0.6), 0 0 40px ${hexToRgba(accent, 0.14)}`

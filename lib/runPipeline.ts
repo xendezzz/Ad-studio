@@ -19,6 +19,7 @@ import { addTextOverlay } from './ffmpegTextOverlay';
 import { applyTextOverlays, type TextItem } from './textBurn';
 import { applyAssetOverlays, type AssetItem } from './assetBurn';
 import { applySubtitles } from './subtitlesBurn';
+import { applyRemotionEmphasis } from './remotionEmphasis';
 import { mixAudio, concatVideos, xfadeVideos, encodeQuality } from './ffmpegMediaOps';
 import { applyVoice } from './voiceApply';
 import { createTempWorkspace, cleanupTempWorkspace } from './tempWorkspace';
@@ -49,6 +50,8 @@ interface NodeOutput {
   // a transition node is a MARKER (no video): it tells the sequence to crossfade the clip
   // above it into the clip below it (by Y position) instead of a hard cut.
   transition?: { type: string; duration: number };
+  // non-fatal notice surfaced to the UI (e.g. remotion skipped: no speech)
+  warning?: string;
 }
 
 function topoSort(nodes: RunNode[], edges: RunEdge[]): RunNode[] {
@@ -184,7 +187,7 @@ export async function runPipeline(runId: string, graph: RunGraph): Promise<{ adP
           status: 'completed',
           outputPath: out.videoPath ?? out.imagePath ?? null,
           completedAt: new Date().toISOString(),
-          inputRefs: { nodeId: node.id, inVideo: inVideo ?? null },
+          inputRefs: { nodeId: node.id, inVideo: inVideo ?? null, ...(out.warning ? { warning: out.warning } : {}) },
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'step failed';
@@ -357,6 +360,15 @@ async function executeNode(
         : { style: p.style, font: p.font, size: p.size, position: p.position };
       const out = await applySubtitles(src, opts);
       return { kind: node.kind, videoPath: out };
+    }
+
+    // --- remotion: transcribe the script, add auto graphics + SFX on important words.
+    // Skips (pass-through + warning) when no one is speaking. ---
+    case 'remotion': {
+      const src = inVideo ?? p.clip;
+      if (!src) throw new Error('remotion needs an input clip');
+      const r = await applyRemotionEmphasis(src);
+      return { kind: node.kind, videoPath: r.videoPath ?? src, warning: r.warning };
     }
 
     // --- end-card: append the branded outro asset (assets/endcard.mp4) ---

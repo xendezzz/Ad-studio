@@ -184,6 +184,7 @@ export const ReferenceAds = {
 
 export const GenJobs = {
   create: (v: Partial<GenJob>) => insertRow<GenJob>('gen_jobs', v),
+  get: (id: string) => getRow<GenJob>('gen_jobs', id),
   update: (id: string, v: Partial<GenJob>) =>
     updateRow<GenJob>('gen_jobs', id, { ...v, updatedAt: new Date().toISOString() }),
   byRun: async (runId: string): Promise<GenJob[]> => {

@@ -165,6 +165,7 @@ export const PARAM_SCHEMAS: Record<PipelineNodeKind, ParamField[]> = {
       default: 'Bottom',
     },
   ],
+  remotion: [],
   'end-card': [{ key: 'brand', label: 'Brand', control: 'text', default: 'Runable' }],
   'music-mix': [
     {

@@ -58,7 +58,7 @@ export function Topbar({
       {/* wordmark — back to projects */}
       <Link
         href="/"
-        className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-white/10 bg-[#15171c]/70 px-2.5 py-1.5 backdrop-blur-xl transition-colors hover:border-white/20"
+        className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-white/10 bg-[#191919]/70 px-2.5 py-1.5 backdrop-blur-xl transition-colors hover:border-white/20"
       >
         <ChevronLeft className="h-4 w-4 text-white/50" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -66,7 +66,7 @@ export function Topbar({
       </Link>
 
       {/* project name — double-click to rename */}
-      <div className="pointer-events-auto flex items-center gap-1.5 rounded-2xl border border-white/10 bg-[#15171c]/70 px-3 py-1.5 backdrop-blur-xl">
+      <div className="pointer-events-auto flex items-center gap-1.5 rounded-2xl border border-white/10 bg-[#191919]/70 px-3 py-1.5 backdrop-blur-xl">
         {editing ? (
           <input
             ref={inputRef}
@@ -93,7 +93,7 @@ export function Topbar({
         <button
           onClick={onPickSwapModel}
           title="Choose the model to swap into your clips"
-          className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#15171c]/70 py-1.5 pl-1.5 pr-3 backdrop-blur-xl transition-colors hover:border-white/25"
+          className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#191919]/70 py-1.5 pl-1.5 pr-3 backdrop-blur-xl transition-colors hover:border-white/25"
         >
           {swapModelImage ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -121,7 +121,7 @@ export function Topbar({
         )}
         <button
           onClick={handleSave}
-          className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-[#15171c]/70 px-3 py-2 text-[12.5px] font-medium text-white/70 backdrop-blur-xl transition-colors hover:text-white/90"
+          className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-[#191919]/70 px-3 py-2 text-[12.5px] font-medium text-white/70 backdrop-blur-xl transition-colors hover:text-white/90"
         >
           {saved ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : null}
           {saved ? 'Saved' : 'Save'}
@@ -130,7 +130,7 @@ export function Topbar({
           onClick={onExportAll}
           disabled={exporting}
           title="Render every Export node on the canvas and download each, named by model"
-          className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-[#15171c]/70 px-3 py-2 text-[12.5px] font-medium text-white/75 backdrop-blur-xl transition-colors hover:text-white/95 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-[#191919]/70 px-3 py-2 text-[12.5px] font-medium text-white/75 backdrop-blur-xl transition-colors hover:text-white/95 disabled:opacity-50"
         >
           {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
           {exporting ? 'Exporting…' : 'Export all'}

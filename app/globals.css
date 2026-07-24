@@ -147,18 +147,39 @@ h1,
    ============================================================ */
 
 :root {
-  --studio-bg: #0c0d11;            /* deep near-black canvas */
+  /* ============================================================
+     Runable design system (extracted from the product Figma):
+     page #141414 · surface #191919 · border #2a2a2a
+     text #e0e0e0 · secondary #8a8a8a · CTA = white pill, dark text
+     ============================================================ */
+  --rn-page: #141414;
+  --rn-surface: #191919;
+  --rn-surface-2: #1a1a1a;
+  --rn-border: #2a2a2a;
+  --rn-text: #e0e0e0;
+  --rn-secondary: #8a8a8a;
+
+  --studio-bg: #141414;            /* Runable page background */
   --studio-dot: rgba(255, 255, 255, 0.18);
   --studio-edge: rgba(255, 255, 255, 0.30);
   --studio-edge-soft: rgba(255, 255, 255, 0.16);
   --port-in: #2dd4bf;   /* teal — inputs */
   --port-out: #e879f9;  /* magenta — outputs */
-  /* warm gold accent — premium, editorial */
-  --gold: #e0a64e;
-  --gold-bright: #f0bd6a;
-  --gold-soft: rgba(224, 166, 78, 0.14);
-  --gold-line: rgba(224, 166, 78, 0.30);
+  /* warm amber accent — Runable brand warmth (was gold) */
+  --gold: #e8a830;
+  --gold-bright: #f5c842;
+  --gold-soft: rgba(232, 168, 48, 0.14);
+  --gold-line: rgba(232, 168, 48, 0.30);
 }
+
+/* Runable-style white CTA pill */
+.btn-runable {
+  background: #ffffff;
+  color: #1a1a1a;
+  border-radius: 999px;
+  font-weight: 500;
+}
+.btn-runable:hover { filter: brightness(0.94); }
 
 /* premium global touches */
 ::selection { background: var(--gold-soft); color: #fff; }

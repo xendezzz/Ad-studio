@@ -42,3 +42,8 @@ next-env.d.ts
 
 # local MCP/dev config
 .mcp.json
+
+# local media/cache (too large for GitHub)
+/.cache/
+/content strategy/
+lib/*.mp4

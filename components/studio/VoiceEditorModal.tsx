@@ -165,7 +165,7 @@ export function VoiceEditorModal({
 
   return (
     <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 backdrop-blur-sm" onMouseDown={() => !busy && onClose()}>
-      <div className="studio-node flex w-[820px] max-w-[95vw] gap-4 rounded-2xl border border-white/10 bg-[#15171c]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="studio-node flex w-[820px] max-w-[95vw] gap-4 rounded-2xl border border-white/10 bg-[#191919]/95 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.7)]" onMouseDown={(e) => e.stopPropagation()}>
         {/* left: video preview */}
         <div className="flex w-[260px] shrink-0 flex-col gap-2.5">
           <div className="relative aspect-[9/16] overflow-hidden rounded-xl border border-white/8 bg-black" style={{ maxHeight: '52vh' }}>

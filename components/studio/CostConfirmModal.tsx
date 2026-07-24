@@ -17,7 +17,7 @@ export function CostConfirmModal({ prompt, onClose }: { prompt: CostPrompt; onCl
   const total = totalUSD(lines);
   return (
     <div className="pointer-events-auto absolute inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm" onMouseDown={onClose}>
-      <div className="w-[420px] overflow-hidden rounded-2xl border border-white/10 bg-[#15171c]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="w-[420px] overflow-hidden rounded-2xl border border-white/10 bg-[#191919]/95 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-xl" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3">
           <DollarSign className="h-4 w-4 text-amber-300" />
           <span className="flex-1 text-[14px] font-semibold text-white/90">{prompt.title}</span>

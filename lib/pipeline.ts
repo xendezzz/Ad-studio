@@ -37,6 +37,7 @@ export type PipelineNodeKind =
   | 'text'
   | 'asset'
   | 'subtitles'
+  | 'remotion'
   | 'end-card'
   | 'music-mix'
   // output
@@ -272,6 +273,16 @@ export const NODE_DEFS: Record<PipelineNodeKind, PipelineNodeDef> = {
     accent: '#fde047',
     icon: 'Captions',
     hint: 'Auto captions, style',
+    hasInput: true,
+    hasOutput: true,
+  },
+  remotion: {
+    kind: 'remotion',
+    label: 'Remotion',
+    category: 'post',
+    accent: '#E8A830',
+    icon: 'Sparkles',
+    hint: 'Auto graphics + SFX from script',
     hasInput: true,
     hasOutput: true,
   },
