@@ -7,7 +7,7 @@ export const config = {
   matcher: ['/((?!login|api/auth|_next|favicon.ico|logo.svg|transitions).*)'],
 };
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   // local escape hatch: set AUTH_DISABLED=true in .env to preview without logging in.
   // NEVER set this in production (Vercel) — it turns off the login gate entirely.
   if (process.env.AUTH_DISABLED === 'true') return NextResponse.next();
